@@ -8,7 +8,7 @@ class Cache{
   private _idleWorkers: ZChipAPI.Unit[];
   get idleWorkers(): ZChipAPI.Unit[]{
     if(this._idleWorkers == null){
-      this._idleWorkers = this._scope.getUnits({type: "Worker", order: "Stop", player: this._scope.playerNumber});
+      this._idleWorkers = this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Stop, player: this._scope.playerNumber});
     }
 
     return this._idleWorkers;
@@ -18,7 +18,7 @@ class Cache{
   private _miningWorkers: ZChipAPI.Unit[];
   get miningWorkers(): ZChipAPI.Unit[]{
     if(this._miningWorkers == null){
-      this._miningWorkers = this._scope.getUnits({type: "Worker", order: "Mine", player: this._scope.playerNumber});
+      this._miningWorkers = this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Mine, player: this._scope.playerNumber});
     }
 
     return this._miningWorkers;
@@ -38,17 +38,17 @@ class Cache{
   private _repairingWorkers: ZChipAPI.Unit[];
   get repairingWorkers(): ZChipAPI.Unit[]{
     if(this._repairingWorkers == null){
-      this._repairingWorkers = this._scope.getUnits({type: "Worker", order: "Repair", player: this._scope.playerNumber});
+      this._repairingWorkers = this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Repair, player: this._scope.playerNumber});
     }
 
     return this._repairingWorkers;
   };
 
   // Gets a list of the player's workers.
-  private _workers: ZChipAPI.Unit[];
-  get workers(): ZChipAPI.Unit[]{
+  private _workers: ZChipAPI.Worker[];
+  get workers(): ZChipAPI.Worker[]{
     if(this._workers == null){
-      this._workers = this._scope.getUnits({type: "Worker", player: this._scope.playerNumber});
+      this._workers = <ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, player: this._scope.playerNumber});
     }
 
     return this._workers;
@@ -78,7 +78,7 @@ class Cache{
   private _army: ZChipAPI.Unit[];
   get army(): ZChipAPI.Unit[]{
     if(this._army == null){
-      this._army = this._scope.getUnits({notOfType: "Worker", player: this._scope.playerNumber});
+      this._army = this._scope.getUnits({notOftype: ZChipAPI.UnitType.Worker, player: this._scope.playerNumber});
     }
 
     return this._army;
@@ -224,37 +224,210 @@ class Cache{
   }
 }
 
-class ConstructionCommander{
+// A base commander class that holds the scope and cache.
+class CommanderBase{
+  // A cache of data from the scope object.
+  protected _cache: Cache;
+
+  // The scope object.
+  protected _scope: ZChipAPI.Scope
+
+  // Sets the scope and the scope cache. Should be called once per cycle.
+  setScope(scope: ZChipAPI.Scope, cache: Cache){
+    this._scope = scope;
+    this._cache = cache;
+  }
+
+  constructor(){
+  }
+}
+
+class EconomyCommander extends CommanderBase{
+  // The maximum distance workers are allowed to remote mine under normal circumstances.
+  private _maxMineDistance: number;
+
+  constructor(maxMineDistance: number){
+    super();
+
+    this._maxMineDistance = maxMineDistance;
+  }
+
+  // Chooses a mine to expand to, or returns null if no expansion is warranted.
+  considerExpansion(currentBase: ZChipAPI.Building): ZChipAPI.Mine{
+    console.log("Considering Expansion");
+    if(currentBase == null){
+      // TODO: Choose a better action if we have no base.
+      return null;
+    }
+
+    var castleCost: number = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
+    var closestMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosest(currentBase, this._cache.undepletedMines);
+    if(closestMine == null){
+      // Give up. There is no more gold to be had.
+      return null;
+    }
+
+    if(
+			this._scope.getDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y) > this._maxMineDistance
+			&& closestMine.gold > castleCost
+		){
+			console.log("Reactive expansion");
+			return closestMine;
+		}
+
+    if(closestMine.gold < castleCost){
+      var expansionCandidates = this._cache.undepletedMines.filter(function(m){
+				return m !== closestMine;
+			});
+
+      var nextMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosest(currentBase, expansionCandidates);
+      if(nextMine == null){
+        // Give up. There is no more gold to be had.
+        return null;
+      }
+
+      if(
+        this._scope.getDistance(nextMine.x, nextMine.y, currentBase.x, currentBase.y)> this._maxMineDistance
+        && nextMine.gold > castleCost
+      ){
+        console.log("Premptive expansion");
+        return nextMine;
+      }
+    }
+
+    return null;
+  }
+
+  // Assigns idle workers to mine.
+  assignIdleWorkers(){
+    console.log("Assigning Idle Workers.");
+
+    // Not using cache, because worker orders may have changed.
+    var workers = <ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Stop, player: this._scope.playerNumber});
+
+    for (var i = 0; i < workers.length; i++){
+      var worker = workers[i];
+      var closestBase = this._scope.getClosest(worker, this._cache.castles);
+      if(closestBase != null){
+        var closestMine = <ZChipAPI.Mine>this._scope.getClosest(closestBase, this._cache.undepletedMines);
+        if(closestMine != null){
+          worker.mine(closestMine);
+        }
+      }
+    }
+  };
+}
+
+class ConstructionCommander extends CommanderBase{
   // The minimum spacing around non castle buildings.
-  baseSpacing: number;
+  private _baseSpacing: number;
 
   // The number of watchtowers to build for each castle the player owns.
-  watchtowersPerCastle: number;
+  private _watchtowersPerCastle: number;
 
   // The maximum number of workers that should work each goldmine.
-  maxWorkersPerGoldmine: number;
+  private _maxWorkersPerGoldmine: number;
 
   // The maximum diameter around the AIs base that it will try to build in.
   private _maxBaseSize: number;
 
-  // A cache of data from the scope object.
-  private _cache: Cache;
+  // Determines if a building can be placed at the specified location.
+  canPlaceBuilding(type:ZChipAPI.BuildingType, x:number, y:number, margin: number ): boolean{
+    var size = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Size);
 
-  // The scope object.
-  private _scope: ZChipAPI.Scope
+    for(let i = x - margin; i < x + size + margin; i++){
+      for(let j = y - margin; j < y + size + margin; j++){
+        if(x < 0 || y < 0 || x >= this._scope.mapWidth || y > this._scope.mapHeight) {
+          return false;
+        }
 
-  constructor(scope: ZChipAPI.Scope, cache: Cache, baseSpacing: number, watchtowersPerCastle: number, maxWorkersPerGoldmine: number){
-    this.baseSpacing = baseSpacing;
-    this.watchtowersPerCastle = watchtowersPerCastle;
-    this.maxWorkersPerGoldmine = maxWorkersPerGoldmine;
-    this._cache = cache;
-    this._scope = scope;
+        var positionPathable:boolean = this._scope.positionIsPathable(i, j);
+        var positionOnRamp:boolean = this._scope.positionIsOnRamp(i, j);
+        var positionIsNearMine:boolean = null;
+
+        // We don't care if we're near a mine unless it is a castle.
+        if(type = ZChipAPI.BuildingType.Castle){
+          positionIsNearMine= this._scope.positionIsNearMine(i, j);
+        }
+
+        if(!positionPathable || positionOnRamp || positionIsNearMine){
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
+  buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType):boolean{
+    console.log("Building " + type.toString());
+    var cost = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Cost);
+    if(cost > this._scope.currentGold){
+      return false;
+    }
+
+    // Not using cache, because worker orders may have changed.
+    var nonBuildingWorkers: ZChipAPI.Worker[] = [];
+    for(var i = 0; i < this._cache.workers.length; i++){
+      var worker = this._cache.workers[i];
+      if(worker.currentOrder == ZChipAPI.OrderType.Mine || worker.currentOrder == ZChipAPI.OrderType.Stop){
+        nonBuildingWorkers.push(worker);
+      }
+    }
+
+    var closestWorker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosest(baseBuilding, nonBuildingWorkers);
+
+    if(closestWorker == null){
+      return false;
+    }
+
+    var buildPosition: ZChipAPI.Point = Util.spiralSearch(
+      baseBuilding.x,
+      baseBuilding.y,
+      (x:number, y:number):boolean =>{
+        return this.canPlaceBuilding(type, x, y, this._baseSpacing);
+      },
+      this._maxBaseSize);
+
+    if(buildPosition == null){
+      this._scope.chatMessage("General Z is thinking: My base is too small.");
+      this._baseSpacing = 1;
+      this._maxBaseSize += 5;
+      return false;
+    }
+
+    closestWorker.build(type, buildPosition.x, buildPosition.y);
+    return true;
+  }
+
+  // Gets a list of all the buildings that are ordered but are not currently being built.
+  getPendingBuildOrders(): ZChipAPI.BuildingType[]{
+    var buildings: ZChipAPI.BuildingType[] = [];
+
+    for(let i = 0; i < this._cache.workers.length; i++){
+      var building: ZChipAPI.BuildingType = this._cache.workers[i].currentlyBuilding;
+      if(building != null){
+        buildings.push(building);
+      }
+    }
+
+    return buildings;
+  }
+
+  // TODO: Get Current Upgrades.
+
+  constructor(baseSpacing: number, watchtowersPerCastle: number, maxWorkersPerGoldmine: number){
+    super();
+    this._baseSpacing = baseSpacing;
+    this._watchtowersPerCastle = watchtowersPerCastle;
+    this._maxWorkersPerGoldmine = maxWorkersPerGoldmine;
 
     this._maxBaseSize = 30;
   }
 }
 
-class CombatCommander{
+class CombatCommander extends CommanderBase{
   // A scout unit used to explore the map.
   scout: ZChipAPI.Unit;
 
@@ -282,6 +455,14 @@ class CombatCommander{
   // How close a unit must get to a goldmine to determine if there is an enemy base there.
   checkMineForBaseDistance: number;
 
+  // Returns a list of mines to scout in priority order.
+  getScoutMinePriority(): ZChipAPI.Mine[]{
+    console.log("Prioritizing scouting");
+    // TODO: Prioritize enemy start locations.
+
+    return this._cache.mines;
+  }
+
   // A function that takes in a list of units, and a dictionary of their hit points last AI cycle and determines which of them has been attacked.
   getAttackedUnits(units: ZChipAPI.Unit[], oldHitpoints: number[]):ZChipAPI.Unit[] {
     var attackedUnits = [];
@@ -296,6 +477,17 @@ class CombatCommander{
     return attackedUnits;
   }
 
+  // Returns the unit to the specified building.
+  returnArmyToBase(base: ZChipAPI.Building):void{
+    for(let i = 0; i < this._cache.army.length; i++){
+      var fighter = this._cache.army[i];
+
+      if(this.scout == null || !fighter.equals(this.scout)){
+        fighter.moveTo(base);
+      }
+    }
+  }
+
   // Gets a dictionary with the current hit points of a set of units.
 	getUnitHitpoints(units: ZChipAPI.Unit[]):number[]{
 		var hitpoints = [];
@@ -307,7 +499,10 @@ class CombatCommander{
 		return hitpoints;
 	}
 
+  // TODO: Clear suspcion from mines.
+
   constructor(minimumArmySize:number, attackArmySize:number, upgradeArmySize: number, attackedDamageThreshold:number){
+    super();
     this.minimumArmySize = minimumArmySize;
     this.attackArmySize = attackArmySize;
     this.upgradeArmySize = upgradeArmySize;
@@ -321,19 +516,73 @@ class CombatCommander{
   }
 }
 
-class GrandCommander{
+class GrandCommander extends CommanderBase{
   // The current mine (if any) targeted for expansion.
   expansionMine: ZChipAPI.Unit;
-
-  // The maximum distance workers are allowed to remote mine under normal circumstances.
-  maxMineDistance: number;
 
   // The name to use in the chat window.
   chatName: string;
 
-  constructor(maxMineDistance: number, chatName: string){
+  // Object to handle worker mining and expansions.
+  economyCommander: EconomyCommander;
+
+  // Object to handle base and unit construction.
+  constructionCommander: ConstructionCommander;
+
+  // Object to handle combat unit orders.
+  combatCommander: CombatCommander;
+
+  // Selects the current primary base.
+  selectPrimaryBase(): ZChipAPI.Building{
+    var prioritizedCastles = this._cache.castles.sort((a, b) =>{
+      return b.creationCycle - a.creationCycle;
+    });
+
+    return prioritizedCastles[0];
+  }
+
+  setScope(scope: ZChipAPI.Scope, cache:Cache){
+    super.setScope(scope, cache);
+    this.economyCommander.setScope(scope, cache);
+    this.constructionCommander.setScope(scope, cache);
+    this.combatCommander.setScope(scope, cache);
+  }
+
+  constructor(chatName: string){
+    super();
     this.expansionMine = null;
-    this.maxMineDistance = maxMineDistance;
     this.chatName = chatName;
+  }
+}
+
+// Contains static utility methods.
+class Util{
+  // Begins at a point and spirals outwards. Returns the first point where validation succeeds.
+  static spiralSearch(startX: number, startY: number, validator: (x:number, y:number)=>boolean, searchDiameter: number):ZChipAPI.Point{
+    var x = 0,
+      y = 0,
+      delta = [0, -1],
+      width = searchDiameter,
+      height = searchDiameter;
+
+    for (let i = Math.pow(Math.max(width, height), 2); i>0; i--) {
+      if ((-width/2 < x && x <= width/2)
+          && (-height/2 < y && y <= height/2)) {
+        if(validator(startX + x,startY + y)){
+          return {x: startX + x, y: startY + y};
+        }
+      }
+
+      if (x === y
+          || (x < 0 && x === -y)
+          || (x > 0 && x === 1-y)){
+        delta = [-delta[1], delta[0]]
+      }
+
+      x = x + delta[0];
+      y = y + delta[1];
+    }
+
+    return null;
   }
 }

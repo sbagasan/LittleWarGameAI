@@ -13,6 +13,7 @@ module LWG {
     getCenterOfUnits(units: IUnit[]);
     getGold(): number;
     positionIsPathable(x: number, y:number);
+    fieldIsRamp(x: number, y:number);
     getMapWidth(): number;
     getMapHeight(): number;
     getArrayOfPlayerNumbers(): number[];
