@@ -123,10 +123,14 @@ module ZChipAPI{
       }
     }
 
-    getTrainOrderFromUnitType(type:UnitType):OrderType{
+    static getTrainOrderFromUnitType(type:UnitType):OrderType{
       switch(type){
         case UnitType.Worker:
-          return OrderType.
+          return OrderType.TrainWorker;
+        case UnitType.Soldier:
+          return OrderType.TrainSoldier;
+        case UnitType.Archer:
+          return OrderType.TrainArcher;
       }
     }
 

@@ -258,10 +258,20 @@ class EconomyCommander extends CommanderBase{
   // The maximum distance workers are allowed to remote mine under normal circumstances.
   private _maxMineDistance: number;
 
-  constructor(maxMineDistance: number){
+  // The maximum number of workers that should work each goldmine.
+  private _maxWorkersPerGoldmine: number;
+
+  constructor(maxMineDistance: number, maxWorkersPerGoldmine: number){
     super();
 
     this._maxMineDistance = maxMineDistance;
+    this._maxWorkersPerGoldmine = maxWorkersPerGoldmine;
+  }
+
+  // Gets the desired number of workers.
+  get targetWorkerCount(): number{
+    // TODO: Adjust for worker splitting.
+    return this._maxWorkersPerGoldmine;
   }
 
   // Chooses a mine to expand to, or returns null if no expansion is warranted.
@@ -336,9 +346,6 @@ class ConstructionCommander extends CommanderBase{
 
   // The number of watchtowers to build for each castle the player owns.
   private _watchtowersPerCastle: number;
-
-  // The maximum number of workers that should work each goldmine.
-  private _maxWorkersPerGoldmine: number;
 
   // The maximum diameter around the AIs base that it will try to build in.
   private _maxBaseSize: number;
@@ -551,11 +558,48 @@ class ConstructionCommander extends CommanderBase{
     }
   }
 
-  constructor(baseSpacing: number, watchtowersPerCastle: number, maxWorkersPerGoldmine: number, supplyBuffer: number){
+  establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, upgradeRatio: number):ConstructionCommanderAction[]{
+    console.log("Prioritizing Build Order.");
+    var priorityQueue: ConstructionCommanderAction[] = [];
+
+    if(expansionTarget != null){
+      priorityQueue.push(ConstructionCommanderAction.Expand);
+      return priorityQueue;
+    }
+
+    if(this._scope.currentSupply + this._supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply <= this._scope.supplyCap){
+      priorityQueue.push(ConstructionCommanderAction.BuildHouse);
+    }
+
+    if(this._cache.workers.length < desiredWorkers){
+      priorityQueue.push(ConstructionCommanderAction.TrainWorker);
+    }
+
+    if(this._cache.watchtowers.length < this._cache.castles.length * this._watchtowersPerCastle){
+      priorityQueue.push(ConstructionCommanderAction.BuildWatchtower);
+    }
+
+    if(this._cache.forges.length < 1 && this._cache.army.length > upgradeRatio){
+      priorityQueue.push(ConstructionCommanderAction.BuildForge);
+
+      if(this._scope.currentGold < this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Forge, ZChipAPI.TypeField.Cost)){
+        return priorityQueue;
+      }
+    }
+
+    // TODO: upgrades.
+
+    priorityQueue.push(ConstructionCommanderAction.TrainFighters);
+
+    priorityQueue.push(ConstructionCommanderAction.BuildBarracks);
+
+    return priorityQueue;
+  }
+
+  constructor(baseSpacing: number, watchtowersPerCastle: number, supplyBuffer: number){
     super();
     this._baseSpacing = baseSpacing;
     this._watchtowersPerCastle = watchtowersPerCastle;
-    this._maxWorkersPerGoldmine = maxWorkersPerGoldmine;
     this._supplyBuffer = supplyBuffer;
 
     this._maxBaseSize = 30;
@@ -576,7 +620,10 @@ class CombatCommander extends CommanderBase{
   attackArmySize: number;
 
   // The number of additional troops the AI must have before investing in the next unit upgrade level.
-  upgradeArmySize: number;
+  private _upgradeRatio: number;
+  get upgradeRatio():number{
+    return this._upgradeRatio;
+  }
 
   // A value indicating whether the AI should attack known or suspected enemy bases.
   attackMode: boolean;
@@ -596,6 +643,16 @@ class CombatCommander extends CommanderBase{
     // TODO: Prioritize enemy start locations.
 
     return this._cache.mines;
+  }
+
+  // Gets the type of unit the army needs most right now.
+  get prefferedArmyUnit(): ZChipAPI.UnitType{
+    if(this._cache.soldiers.length > this._cache.archers.length){
+      return ZChipAPI.UnitType.Archer;
+    }
+    else{
+      return ZChipAPI.UnitType.Soldier;
+    }
   }
 
   // A function that takes in a list of units, and a dictionary of their hit points last AI cycle and determines which of them has been attacked.
@@ -636,11 +693,11 @@ class CombatCommander extends CommanderBase{
 
   // TODO: Clear suspcion from mines.
 
-  constructor(minimumArmySize:number, attackArmySize:number, upgradeArmySize: number, attackedDamageThreshold:number){
+  constructor(minimumArmySize:number, attackArmySize:number, upgradeRatio: number, attackedDamageThreshold:number){
     super();
     this.minimumArmySize = minimumArmySize;
     this.attackArmySize = attackArmySize;
-    this.upgradeArmySize = upgradeArmySize;
+    this._upgradeRatio = upgradeRatio;
     this.attackedDamageThreshold = attackedDamageThreshold;
 
     this.scout = null;
@@ -674,7 +731,9 @@ class GrandCommander extends CommanderBase{
     var expansionTarget: ZChipAPI.Mine = this.economyCommander.considerExpansion(primaryBase);
 
     // Build Orders.
-    var constructionPriority: ConstructionCommanderAction[] = this.constructionCommander.
+    var constructionPriority: ConstructionCommanderAction[] = this.constructionCommander.establishBuildPriority(expansionTarget, this.economyCommander.targetWorkerCount, this.combatCommander.upgradeRatio);
+    this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedArmyUnit);
+    this.constructionCommander.rebuildAndRepair();
   }
 
   // Selects the current primary base.
