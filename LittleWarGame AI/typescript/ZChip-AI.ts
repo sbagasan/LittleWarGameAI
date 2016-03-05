@@ -1,5 +1,17 @@
 /// <reference path="./ZChip-API.ts"/>
 
+// The possible actions that can be taken by the construction commander.
+enum ConstructionCommanderAction{
+  Expand,
+  BuildHouse,
+  BuildWatchtower,
+  BuildForge,
+  BuildBarracks,
+  UpgradeAttack,
+  TrainWorker,
+  TrainFighters
+}
+
 // Provides access to cached copies of scope data.
 class Cache{
   private _scope: ZChipAPI.Scope;
@@ -115,10 +127,10 @@ class Cache{
   };
 
   // Gets a list of the player's castles.
-  private _castles: ZChipAPI.Building[];
-  get castles(): ZChipAPI.Building[]{
+  private _castles: ZChipAPI.ProductionBuilding[];
+  get castles(): ZChipAPI.ProductionBuilding[]{
     if(this._castles == null){
-      this._castles = this._scope.getBuildings({player: this._scope.playerNumber, type: "Castle"});
+      this._castles = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: "Castle"});
     }
 
     return this._castles;
@@ -139,10 +151,10 @@ class Cache{
   };
 
   // Gets a list of the player's barracks.
-  private _barracks: ZChipAPI.Building[];
-  get barracks(): ZChipAPI.Building[]{
+  private _barracks: ZChipAPI.ProductionBuilding[];
+  get barracks(): ZChipAPI.ProductionBuilding[]{
     if(this._barracks == null){
-      this._barracks = this._scope.getBuildings({player: this._scope.playerNumber, type: "Barracks"});
+      this._barracks = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: "Barracks"});
     }
 
     return this._barracks;
@@ -331,6 +343,43 @@ class ConstructionCommander extends CommanderBase{
   // The maximum diameter around the AIs base that it will try to build in.
   private _maxBaseSize: number;
 
+  // The number of free supply left before a farm will be constructed.
+  private _supplyBuffer: number;
+
+  // Repair dammaged buildings or finishes buildings that were left incomplete.
+  rebuildAndRepair(){
+    var repairingWorkers: ZChipAPI.Worker[] = < ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, player:this._scope.playerNumber, order: ZChipAPI.OrderType.Repair});
+    var stoppedWorkers : ZChipAPI.Worker[] = < ZChipAPI.Worker[]> this._scope.getUnits({type: ZChipAPI.UnitType.Worker, player:this._scope.playerNumber, order: ZChipAPI.OrderType.Stop});
+    var miningWorkers : ZChipAPI.Worker[] = < ZChipAPI.Worker[]> this._scope.getUnits({type: ZChipAPI.UnitType.Worker, player:this._scope.playerNumber, order: ZChipAPI.OrderType.Mine});
+    var availibleWorkers:ZChipAPI.Worker[] = stoppedWorkers.concat(miningWorkers);
+
+    if(this._cache.buildings.length - this._cache.completeBuildings.length > repairingWorkers.length){
+			for(let i: number = 0; i < this._cache.buildings.length; i++){
+				let building: ZChipAPI.Building = this._cache.buildings[i];
+				if(!building.isFinished){
+					let worker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosest(building, availibleWorkers);
+					if(worker != null){
+						worker.repair(building);
+					}
+				}
+			}
+		}
+
+		if(repairingWorkers.length == 0){
+			for(let i:number = 0; i < this._cache.completeBuildings.length; i++){
+				let building = this._cache.completeBuildings[i];
+
+				if(building.hitpoints < this._scope.getBuildingTypeFieldValue(building.type, ZChipAPI.TypeField.MaxHitpoints)){
+					let worker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosest(building, availibleWorkers);
+					if(worker != null){
+            this._scope.chatMessage("General Z is thinking: This is why we can't have nice things.");
+            worker.repair(building);
+					}
+				}
+			}
+    }
+  }
+
   // Determines if a building can be placed at the specified location.
   canPlaceBuilding(type:ZChipAPI.BuildingType, x:number, y:number, margin: number ): boolean{
     var size = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Size);
@@ -417,11 +466,97 @@ class ConstructionCommander extends CommanderBase{
 
   // TODO: Get Current Upgrades.
 
-  constructor(baseSpacing: number, watchtowersPerCastle: number, maxWorkersPerGoldmine: number){
+  // Executes the build orders as determined by the priority.
+  executeBuildOrders(priority: ConstructionCommanderAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedArmyUnit: ZChipAPI.UnitType){
+    console.log("Executing Build Orders.");
+
+    var buildingInProgress = false;
+    if(this._cache.buildings.length + this.getPendingBuildOrders().length > this._cache.completeBuildings.length){
+      buildingInProgress = true;
+    }
+
+    while(priority.length > 0){
+      let workOrder: ConstructionCommanderAction = priority.shift();
+
+      switch(workOrder){
+        case ConstructionCommanderAction.Expand:
+          if(!buildingInProgress && expansionTarget != null){
+            let buildingStarted = this.buildBuildingNearBuilding(expansionTarget, ZChipAPI.BuildingType.Castle);
+
+            if(buildingStarted){
+              buildingInProgress = true;
+              this._scope.chatMessage("General Z is thinking: A man's home is his castle.");
+            }
+          }
+          break;
+        case ConstructionCommanderAction.BuildHouse:
+          if(!buildingInProgress){
+            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.House);
+
+            if(buildingStarted){
+              buildingInProgress = true;
+              this._scope.chatMessage("General Z is thinking: We require additional pylons.");
+            }
+          }
+          break;
+        case ConstructionCommanderAction.TrainWorker:
+          for(let i = 0; i < this._cache.castles.length; i++){
+            let castle: ZChipAPI.ProductionBuilding = this._cache.castles[i];
+
+            if(castle.getUnitProductionAtQueue(0) == null){
+              castle.trainUnit(ZChipAPI.UnitType.Worker);
+            }
+          }
+          break;
+        case ConstructionCommanderAction.BuildWatchtower:
+          if(!buildingInProgress){
+            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Watchtower);
+
+            if(buildingStarted){
+              buildingInProgress = true;
+              this._scope.chatMessage("General Z is thinking: Wolves beware!");
+            }
+          }
+          break;
+        case ConstructionCommanderAction.BuildForge:
+          if(!buildingInProgress){
+            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Forge);
+
+            if(buildingStarted){
+              buildingInProgress = true;
+              this._scope.chatMessage("General Z is thinking: Harder, better, faster, stronger.");
+            }
+          }
+          break;
+        case ConstructionCommanderAction.BuildBarracks:
+          if(!buildingInProgress){
+            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Barracks);
+
+            if(buildingStarted){
+              buildingInProgress = true;
+            }
+          }
+          break;
+        case ConstructionCommanderAction.TrainFighters:
+          for(let i = 0; i < this._cache.barracks.length; i++){
+            let singleBarracks = this._cache.barracks[i];
+
+            if(singleBarracks.getUnitProductionAtQueue(0) == null){
+              singleBarracks.trainUnit(prefferedArmyUnit);
+            }
+          }
+          break;
+        // TODO: Upgrades.
+      }
+    }
+  }
+
+  constructor(baseSpacing: number, watchtowersPerCastle: number, maxWorkersPerGoldmine: number, supplyBuffer: number){
     super();
     this._baseSpacing = baseSpacing;
     this._watchtowersPerCastle = watchtowersPerCastle;
     this._maxWorkersPerGoldmine = maxWorkersPerGoldmine;
+    this._supplyBuffer = supplyBuffer;
 
     this._maxBaseSize = 30;
   }
@@ -531,6 +666,16 @@ class GrandCommander extends CommanderBase{
 
   // Object to handle combat unit orders.
   combatCommander: CombatCommander;
+
+  executeOrders():void{
+    // Economic Orders.
+    var primaryBase:ZChipAPI.Building = this.selectPrimaryBase();
+    this.economyCommander.assignIdleWorkers();
+    var expansionTarget: ZChipAPI.Mine = this.economyCommander.considerExpansion(primaryBase);
+
+    // Build Orders.
+    var constructionPriority: ConstructionCommanderAction[] = this.constructionCommander.
+  }
 
   // Selects the current primary base.
   selectPrimaryBase(): ZChipAPI.Building{
