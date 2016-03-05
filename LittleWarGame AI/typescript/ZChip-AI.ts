@@ -1,5 +1,229 @@
 /// <reference path="./ZChip-API.ts"/>
 
+// Provides access to cached copies of scope data.
+class Cache{
+  private _scope: ZChipAPI.Scope;
+
+  // Gets a list of the player's idle workers.
+  private _idleWorkers: ZChipAPI.Unit[];
+  get idleWorkers(): ZChipAPI.Unit[]{
+    if(this._idleWorkers == null){
+      this._idleWorkers = this._scope.getUnits({type: "Worker", order: "Stop", player: this._scope.playerNumber});
+    }
+
+    return this._idleWorkers;
+  };
+
+  // Gets a list of the player's mining workers.
+  private _miningWorkers: ZChipAPI.Unit[];
+  get miningWorkers(): ZChipAPI.Unit[]{
+    if(this._miningWorkers == null){
+      this._miningWorkers = this._scope.getUnits({type: "Worker", order: "Mine", player: this._scope.playerNumber});
+    }
+
+    return this._miningWorkers;
+  };
+
+  // Gets a list of the players idle of mining workers availible for other tasks.
+  private _availibleWorkers: ZChipAPI.Unit[];
+  get availibleWorkers(): ZChipAPI.Unit[]{
+    if(this._availibleWorkers == null){
+      this._availibleWorkers = this.idleWorkers.concat(this.miningWorkers);
+    }
+
+    return this._availibleWorkers;
+  };
+
+  // Gets a list of the player's workers which are repairing or building.
+  private _repairingWorkers: ZChipAPI.Unit[];
+  get repairingWorkers(): ZChipAPI.Unit[]{
+    if(this._repairingWorkers == null){
+      this._repairingWorkers = this._scope.getUnits({type: "Worker", order: "Repair", player: this._scope.playerNumber});
+    }
+
+    return this._repairingWorkers;
+  };
+
+  // Gets a list of the player's workers.
+  private _workers: ZChipAPI.Unit[];
+  get workers(): ZChipAPI.Unit[]{
+    if(this._workers == null){
+      this._workers = this._scope.getUnits({type: "Worker", player: this._scope.playerNumber});
+    }
+
+    return this._workers;
+  };
+
+  // Gets a list of the player's soldiers.
+  private _soldiers: ZChipAPI.Unit[];
+  get soldiers(): ZChipAPI.Unit[]{
+    if(this._soldiers == null){
+      this._soldiers = this._scope.getUnits({type: "Soldier", player: this._scope.playerNumber});
+    }
+
+    return this._soldiers;
+  };
+
+  // Gets a list of the player's archers.
+  private _archers: ZChipAPI.Unit[];
+  get archers(): ZChipAPI.Unit[]{
+    if(this._archers == null){
+      this._archers = this._scope.getUnits({type: "Archer", player: this._scope.playerNumber});
+    }
+
+    return this._archers;
+  };
+
+  // Gets a list of the player's army units.
+  private _army: ZChipAPI.Unit[];
+  get army(): ZChipAPI.Unit[]{
+    if(this._army == null){
+      this._army = this._scope.getUnits({notOfType: "Worker", player: this._scope.playerNumber});
+    }
+
+    return this._army;
+  };
+
+  // Gets a list of the player's units.
+  private _units: ZChipAPI.Unit[];
+  get units(): ZChipAPI.Unit[]{
+    if(this._units == null){
+      this._units = this._scope.getUnits({player: this._scope.playerNumber});
+    }
+
+    return this._units;
+  };
+
+  // Gets a list of the player's buildings.
+  private _buildings: ZChipAPI.Building[];
+  get buildings(): ZChipAPI.Building[]{
+    if(this._buildings == null){
+      this._buildings = this._scope.getBuildings({player: this._scope.playerNumber});
+    }
+
+    return this._buildings;
+  };
+
+  // Gets a list of the player's complete buildings.
+  private _completeBuildings: ZChipAPI.Building[];
+  get completeBuildings(): ZChipAPI.Building[]{
+    if(this._completeBuildings == null){
+      this._completeBuildings = this._scope.getBuildings({player: this._scope.playerNumber, onlyFinshed: true});
+    }
+
+    return this._completeBuildings;
+  };
+
+  // Gets a list of the player's castles.
+  private _castles: ZChipAPI.Building[];
+  get castles(): ZChipAPI.Building[]{
+    if(this._castles == null){
+      this._castles = this._scope.getBuildings({player: this._scope.playerNumber, type: "Castle"});
+    }
+
+    return this._castles;
+  };
+
+  // Gets a list of the mines on the map.
+  private _mines: ZChipAPI.Mine[];
+  get mines(): ZChipAPI.Mine[]{
+    if(this._mines == null){
+      this._mines = this._scope.getBuildings({type: "Goldmine"}).map(
+        (building: ZChipAPI.Building) =>{
+          return <ZChipAPI.Mine>building;
+        }
+      );
+    }
+
+    return this._mines;
+  };
+
+  // Gets a list of the player's barracks.
+  private _barracks: ZChipAPI.Building[];
+  get barracks(): ZChipAPI.Building[]{
+    if(this._barracks == null){
+      this._barracks = this._scope.getBuildings({player: this._scope.playerNumber, type: "Barracks"});
+    }
+
+    return this._barracks;
+  };
+
+  // Gets a list of the player's forges.
+  private _forges: ZChipAPI.Building[];
+  get forges(): ZChipAPI.Building[]{
+    if(this._forges == null){
+      this._forges = this._scope.getBuildings({player: this._scope.playerNumber, type: "Forge"});
+    }
+
+    return this._forges;
+  };
+
+  // Gets a list of the player's watchtowers.
+  private _watchtowers: ZChipAPI.Building[];
+  get watchtowers(): ZChipAPI.Building[]{
+    if(this._watchtowers == null){
+      this._watchtowers = this._scope.getBuildings({player: this._scope.playerNumber, type: "Watchtower"});
+    }
+
+    return this._watchtowers;
+  };
+
+  // Gets a list of the player's houses.
+  private _houses: ZChipAPI.Building[];
+  get houses(): ZChipAPI.Building[]{
+    if(this._houses == null){
+      this._houses = this._scope.getBuildings({player: this._scope.playerNumber, type: "House"});
+    }
+
+    return this._houses;
+  };
+
+  // Gets a list of enemy buildings that have been discoverd.
+  private _enemyBuildings: ZChipAPI.Building[];
+  get enemyBuildings(): ZChipAPI.Building[]{
+    if(this._enemyBuildings == null){
+      this._enemyBuildings = this._scope.getBuildings({enemyOf: this._scope.playerNumber}).filter(
+        (building: ZChipAPI.Building) => {
+          return !building.isNeutral;
+        }
+      );
+    }
+
+    return this._enemyBuildings;
+  }
+
+  // Gets a list of enemy units that are visible.
+  private _enemyUnits: ZChipAPI.Unit[];
+  get enemyUnits():ZChipAPI.Unit[]{
+    if(this._enemyUnits == null){
+      this._enemyUnits = this._scope.getUnits({enemyOf: this._scope.playerNumber}).filter(
+        (unit: ZChipAPI.Unit) =>{
+          return !unit.isNeutral;
+        }
+      );
+    }
+
+    return this._enemyUnits;
+  }
+
+  private _undepletedMines: ZChipAPI.Mine[];
+  get undepletedMines():ZChipAPI.Mine[]{
+    if(this._undepletedMines == null){
+      this._undepletedMines = this.mines.filter(
+        (mine: ZChipAPI.Mine) => {
+          return mine.gold > 0;
+        }
+      );
+    }
+
+    return this._undepletedMines;
+  }
+
+  constructor(scope: ZChipAPI.Scope){
+    this._scope = scope;
+  }
+}
+
 class ConstructionCommander{
   // The minimum spacing around non castle buildings.
   baseSpacing: number;
@@ -13,38 +237,21 @@ class ConstructionCommander{
   // The maximum diameter around the AIs base that it will try to build in.
   private _maxBaseSize: number;
 
-  // The maximum number of houses required to reach population cap.
-  private _maxHouses: number;
-
-  // The radius around a mine in which a castle cannot be built.
-  private _minimumMineRadius: number;
+  // A cache of data from the scope object.
+  private _cache: Cache;
 
   // The scope object.
-  scope: ZChipAPI.Scope;
+  private _scope: ZChipAPI.Scope
 
-  constructor(scope: ZChipAPI.Scope, baseSpacing: number, watchtowersPerCastle: number, maxWorkersPerGoldmine: number){
+  constructor(scope: ZChipAPI.Scope, cache: Cache, baseSpacing: number, watchtowersPerCastle: number, maxWorkersPerGoldmine: number){
     this.baseSpacing = baseSpacing;
     this.watchtowersPerCastle = watchtowersPerCastle;
     this.maxWorkersPerGoldmine = maxWorkersPerGoldmine;
-    this.scope = scope;
+    this._cache = cache;
+    this._scope = scope;
 
-    this._maxHouses = 10;
     this._maxBaseSize = 30;
-    this._minimumMineRadius = 7;
   }
-
-  // Determines if a position is too close to a gold mine to build a castle.
-	tooCloseToGoldMine(x, y): boolean{
-		for(var i = 0; i < this.scope.mines.length; i++){
-			var mine = this.scope.mines[i];
-			var distance = this.getDistance(x, y, mine.getX(), mine.getY());
-			if(distance < this.minimumMineRadius){
-				return true;
-			}
-		}
-
-		return false;
-	};
 }
 
 class CombatCommander{

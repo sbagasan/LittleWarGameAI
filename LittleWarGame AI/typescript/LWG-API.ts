@@ -26,6 +26,7 @@ module LWG {
     getTeamNumber(playerNumber: number): number;
     getHeightLevel(x:number, y:number): number;
     fieldIsRamp(x:number, y:number): boolean;
+    chatMsg(messate: string):void;
   }
 
   export interface IUnit{
