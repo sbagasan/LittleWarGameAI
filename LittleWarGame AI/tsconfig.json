@@ -12,7 +12,8 @@
         "removeComments": true,
         "noLib": false,
         "preserveConstEnums": true,
-        "suppressImplicitAnyIndexErrors": true
+        "suppressImplicitAnyIndexErrors": true,
+        "out": "./out/GeneralZ.js"
     },
     "exclude": [
         "node_modules",

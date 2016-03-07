@@ -412,7 +412,12 @@ if(this.initialized == undefined){
 			}
 		}
 		else if(this.expansionMine != null){
-			scope.order("AMove", this.currentCycle.army, {x: this.expansionMine.getX(), y: this.expansionMine.getY()});
+			for(i = 0; i < this.currentCycle.army.length; i++){
+				var fighter = this.currentCycle.army[i];
+				if(this.scout == null || !fighter.equals(this.scout)){
+					scope.order("AMove", [fighter], {x: this.expansionMine.getX(), y: this.expansionMine.getY()}));
+				}
+			}
 		}
 		else if(this.attackMode == false){
 			this.returnArmyToBase();
