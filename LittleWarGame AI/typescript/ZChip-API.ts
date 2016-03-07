@@ -208,6 +208,8 @@ module ZChipAPI{
           return OrderType.UpgradeAttack;
         case "Moveto":
           return OrderType.MoveTo;
+        case "AMove":
+          return OrderType.AttackMove;
         case "Train Worker":
           return OrderType.TrainWorker;
         case "Train Archer":
@@ -250,6 +252,8 @@ module ZChipAPI{
           return "Attack Upgrade";
         case OrderType.MoveTo:
           return "Moveto";
+        case OrderType.AttackMove:
+          return "AMove";
         case OrderType.TrainWorker:
           return "Train Worker";
         case OrderType.TrainArcher:
@@ -287,6 +291,7 @@ module ZChipAPI{
   export enum OrderType{
     Stop,
     MoveTo,
+    AttackMove,
     Mine,
     Repair,
     BuildCastle,
@@ -321,6 +326,18 @@ module ZChipAPI{
   export class Scope{
     // The wrapped little war game object.
     private _innerScope: LWG.IScope;
+
+    // Gets the center point of a list of units.
+    getCenterOfUnits(units: GameEntity[]): Point{
+      var innerUnits: LWG.IUnit[] = units.map(
+        (unit) => {
+          return unit.innerUnit;
+        }
+      );
+
+      var point: LWG.IPoint = this._innerScope.getCenterOfUnits(innerUnits);
+      return new Point(point.x, point.y);
+    }
 
   	// The AI's player number.
     get playerNumber(): number {
@@ -644,6 +661,11 @@ module ZChipAPI{
     // The scope object.
     protected _scope: Scope;
 
+    // Orders the game unit to stop it's current action.
+    stop():void{
+      this._scope.order(OrderType.Stop, [this], null, this.chainCommandMode);
+    }
+
     constructor(innerUnit: LWG.IUnit, scope:Scope){
       this._innerUnit = innerUnit;
       this._scope = scope;
@@ -659,6 +681,11 @@ module ZChipAPI{
     // Orders the unit to move to the specified building.
     moveTo(building: Building):void{
       this._scope.order(OrderType.MoveTo, [this], {unit: building}, this.chainCommandMode)
+    }
+
+    // Orders the unit to attack move to the coordiantes.
+    attackTo(x: number, y:number):void{
+      this._scope.order(OrderType.AttackMove, [this], {x:x, y:y}, this.chainCommandMode);
     }
 
     constructor(innerUnit: LWG.IUnit, scope:Scope){

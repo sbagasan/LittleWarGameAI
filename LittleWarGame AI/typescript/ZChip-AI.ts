@@ -611,7 +611,7 @@ class CombatCommander extends CommanderBase{
   scout: ZChipAPI.Unit;
 
   // An ordered collection of mine locations to scout.
-  scoutOrder: ZChipAPI.Unit[];
+  scoutOrder: ZChipAPI.Mine[];
 
   // The minimum army size the AI should have, under which only defensive behaviour will occur.
   minimumArmySize: number;
@@ -693,6 +693,78 @@ class CombatCommander extends CommanderBase{
 
   // TODO: Clear suspcion from mines.
 
+  // Orders units other than the scout to attack move to the coordinate.
+  private attackExcludeScout(x:number, y:number):void{
+    for(let i = 0; i < this._cache.army.length; i++){
+      var fighter = this._cache.army[i];
+      if(this.scout == null || !fighter.equals(this.scout)){
+        fighter.attackTo(x, y);
+      }
+    }
+  }
+
+  executeCombatOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
+    console.log("Executing Combat Orders.");
+    if(this.scout == undefined){
+      this.scout = null;
+    }
+
+    if(this.scout != null && this.scout.hitpoints < 1){
+      // TODO: Add suspected bases.
+      this.scout = null;
+    }
+
+    if(this.attackMode == false && this._cache.army.length > this.attackArmySize){
+      this._scope.chatMessage("General Z is thinking: I'm ready to attack!");
+      this.attackMode = true;
+    }
+    else if(this.attackMode == true && this._cache.army.length < this.minimumArmySize){
+      this._scope.chatMessage("General Z is thinking: My army has been decimated!");
+      this.attackMode = false;
+    }
+
+    if(this._cache.enemyUnits.length > 0){
+      let target = this._scope.getCenterOfUnits(this._cache.enemyUnits);
+      this.attackExcludeScout(target.x, target.y);
+		}
+		else if(expansionTarget != null){
+      this.attackExcludeScout(expansionTarget.x, expansionTarget.y);
+		}
+		else if(this.attackMode == false){
+			this.returnArmyToBase(primaryBase);
+		}
+		else if(this.attackMode == true && this._cache.enemyBuildings.length > 0){
+			// TODO prioritize target.
+			var targetBuilding = this._cache.enemyBuildings[0];
+      this.attackExcludeScout(targetBuilding.x, targetBuilding.y);
+		}
+		else if(this.attackMode == true && this.suspectedBases.length > 0){
+      // TODO: Also check out suspected bases.
+		}
+		else{
+			this.returnArmyToBase(primaryBase);
+		}
+
+		if(this._cache.army.length > this.minimumArmySize && this.scout == null){
+			this.scout = this._cache.army[0];
+			this.scout.stop();
+			this._scope.chatMessage("General Z is thinking: I've selected a new scout.");
+		}
+
+		if(this.scoutOrder.length == 0){
+			var mines = this.getScoutMinePriority();
+			this.scoutOrder = this.scoutOrder.concat(mines);
+		}
+
+		if(this.scout != null){
+			if(this.scout.currentOrder == ZChipAPI.OrderType.Stop){
+				var mine = this.scoutOrder.shift();
+				this.scout.moveTo(mine);
+				this._scope.chatMessage("General Z is thinking: Let's take a look over here...");
+			}
+		}
+  }
+
   constructor(minimumArmySize:number, attackArmySize:number, upgradeRatio: number, attackedDamageThreshold:number){
     super();
     this.minimumArmySize = minimumArmySize;
@@ -734,6 +806,8 @@ class GrandCommander extends CommanderBase{
     var constructionPriority: ConstructionCommanderAction[] = this.constructionCommander.establishBuildPriority(expansionTarget, this.economyCommander.targetWorkerCount, this.combatCommander.upgradeRatio);
     this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedArmyUnit);
     this.constructionCommander.rebuildAndRepair();
+
+    // Combat Orders.
   }
 
   // Selects the current primary base.
