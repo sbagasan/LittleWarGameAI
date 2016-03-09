@@ -781,12 +781,6 @@ class CombatCommander extends CommanderBase{
 }
 
 class GrandCommander extends CommanderBase{
-  // The current mine (if any) targeted for expansion.
-  expansionMine: ZChipAPI.Unit;
-
-  // The name to use in the chat window.
-  chatName: string;
-
   // Object to handle worker mining and expansions.
   economyCommander: EconomyCommander;
 
@@ -808,6 +802,7 @@ class GrandCommander extends CommanderBase{
     this.constructionCommander.rebuildAndRepair();
 
     // Combat Orders.
+    this.combatCommander.executeCombatOrders(expansionTarget, primaryBase);
   }
 
   // Selects the current primary base.
@@ -826,12 +821,27 @@ class GrandCommander extends CommanderBase{
     this.combatCommander.setScope(scope, cache);
   }
 
-  constructor(chatName: string){
+  constructor(){
     super();
-    this.expansionMine = null;
-    this.chatName = chatName;
+    this.combatCommander = new CombatCommander(Settings.minimumArmySize, Settings.attackArmySize, Settings.upgradeRatio, Settings.attackedDamageThreshold);
+    this.economyCommander = new EconomyCommander(Settings.maxMineDistance, Settings.maxWorkersPerGoldmine);
+    this.constructionCommander =  new  ConstructionCommander(Settings.baseSpacing, Settings.watchtowersPerCastle, Settings.supplyBuffer);
   }
 }
+
+// A class with static values that determine the AI's behaviour.
+class Settings{
+  static minimumArmySize: number = 3;
+  static attackArmySize:number= 10;
+  static upgradeRatio:number = 5;
+  static attackedDamageThreshold: number = 10;
+  static maxMineDistance: number = 10;
+  static maxWorkersPerGoldmine:number = 10;
+  static baseSpacing: number = 2;
+  static watchtowersPerCastle: number = 1;
+  static supplyBuffer: number = 6;
+}
+
 
 // Contains static utility methods.
 class Util{

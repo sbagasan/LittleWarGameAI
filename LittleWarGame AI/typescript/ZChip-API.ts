@@ -432,27 +432,27 @@ module ZChipAPI{
       }
 
       var notOfType: UnitType = filter.notOfType;
-      if(type != undefined){
+      if(notOfType != undefined){
         mappedFilter[HiddenMagicStrings.filterNotOfTypePropertyName] = TypeMapper.getUnitName(notOfType);
       }
 
       var player: number = filter.player;
-      if(type != undefined){
+      if(player != undefined){
         mappedFilter[HiddenMagicStrings.filterPlayerPropertyName] = player;
       }
 
       var team: number = filter.team;
-      if(type != undefined){
+      if(team != undefined){
         mappedFilter[HiddenMagicStrings.filterTeamPropertyName] = team;
       }
 
       var enemyOf: number = filter.enemyOf;
-      if(type != undefined){
+      if(enemyOf != undefined){
         mappedFilter[HiddenMagicStrings.filterEnemyOfPropertyName] = enemyOf;
       }
 
       var order: OrderType = filter.order;
-      if(type != undefined){
+      if(order != undefined){
         mappedFilter[HiddenMagicStrings.filterOrderPropertyName] = TypeMapper.getOrderName(order);
       }
 
@@ -727,25 +727,6 @@ module ZChipAPI{
     }
   }
 
-  export class ProductionBuilding extends Building{
-    constructor(innerUnit: LWG.IUnit, scope:Scope){
-      super(innerUnit, scope);
-    }
-
-    // TODO: get upgrade production at queue.
-
-    trainUnit(type: ZChipAPI.UnitType): void{
-      var trainCommand: OrderType = TypeMapper.getTrainOrderFromUnitType(type);
-
-      this._scope.order(trainCommand, [this], null, this.chainCommandMode);
-    }
-
-    // Gets the unit currently in production at the queue index, or null if no unit is in production at that index.
-    getUnitProductionAtQueue(index: number):UnitType{
-      return TypeMapper.getUnitType(this._innerUnit.getUnitTypeNameInProductionQueAt(index + 1));
-    }
-  }
-
   export class Building extends GameEntity{
     constructor(innerUnit: LWG.IUnit, scope:Scope){
       super(innerUnit, scope);
@@ -768,6 +749,25 @@ module ZChipAPI{
     // Gets the size of the building.
     get size():number{
       return this._scope.getBuildingTypeFieldValue(TypeMapper.getBuildingType(this._innerUnit.getTypeName()), TypeField.Size);
+    }
+  }
+
+  export class ProductionBuilding extends Building{
+    constructor(innerUnit: LWG.IUnit, scope:Scope){
+      super(innerUnit, scope);
+    }
+
+    // TODO: get upgrade production at queue.
+
+    trainUnit(type: ZChipAPI.UnitType): void{
+      var trainCommand: OrderType = TypeMapper.getTrainOrderFromUnitType(type);
+
+      this._scope.order(trainCommand, [this], null, this.chainCommandMode);
+    }
+
+    // Gets the unit currently in production at the queue index, or null if no unit is in production at that index.
+    getUnitProductionAtQueue(index: number):UnitType{
+      return TypeMapper.getUnitType(this._innerUnit.getUnitTypeNameInProductionQueAt(index + 1));
     }
   }
 
