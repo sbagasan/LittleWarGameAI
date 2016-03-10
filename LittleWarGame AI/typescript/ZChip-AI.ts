@@ -120,7 +120,7 @@ class Cache{
   private _completeBuildings: ZChipAPI.Building[];
   get completeBuildings(): ZChipAPI.Building[]{
     if(this._completeBuildings == null){
-      this._completeBuildings = this._scope.getBuildings({player: this._scope.playerNumber, onlyFinshed: true});
+      this._completeBuildings = this._scope.getBuildings({player: this._scope.playerNumber, onlyFinished: true});
     }
 
     return this._completeBuildings;
@@ -326,12 +326,14 @@ class EconomyCommander extends CommanderBase{
 
     // Not using cache, because worker orders may have changed.
     var workers = <ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Stop, player: this._scope.playerNumber});
-
+    console.log(workers);
     for (var i = 0; i < workers.length; i++){
       var worker = workers[i];
       var closestBase = this._scope.getClosest(worker, this._cache.castles);
+      console.log(closestBase);
       if(closestBase != null){
         var closestMine = <ZChipAPI.Mine>this._scope.getClosest(closestBase, this._cache.undepletedMines);
+        console.log(closestMine);
         if(closestMine != null){
           worker.mine(closestMine);
         }

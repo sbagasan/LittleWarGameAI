@@ -1,6 +1,34 @@
 ///<reference path="LWG-API.ts" />
 module ZChipAPI{
 
+  class BuildingFactory{
+    static createBuilding(unit: LWG.IUnit, scope: Scope):Building{
+      var type: BuildingType = TypeMapper.getBuildingType(unit.getTypeName());
+      switch(type){
+        case BuildingType.Mine:
+          return new Mine(unit, scope);
+        case BuildingType.Castle:
+        case BuildingType.Forge:
+        case BuildingType.Barracks:
+          return new ProductionBuilding(unit, scope);
+        default:
+          return new Building(unit, scope);
+      }
+    }
+  }
+
+  class UnitFactory{
+    static createUnit(unit: LWG.IUnit, scope: Scope): Unit{
+      var type: UnitType = TypeMapper.getUnitType(unit.getTypeName());
+      switch(type){
+        case UnitType.Worker:
+          return new Worker(unit, scope);
+        default:
+          return new Unit(unit, scope);
+      }
+    }
+  }
+
   // Represents a point.
   export class Point{
     x: number;
@@ -88,6 +116,8 @@ module ZChipAPI{
           return BuildingType.House;
         case "Barracks":
           return BuildingType.Barracks;
+        case "Goldmine":
+          return BuildingType.Mine;
       }
     }
 
@@ -200,7 +230,7 @@ module ZChipAPI{
           return OrderType.BuildWatchtower;
         case "Build Forge":
           return OrderType.BuildForge;
-        case "Build Hosue":
+        case "Build House":
           return OrderType.BuildHouse;
         case "Build Barracks":
           return OrderType.BuildBarracks;
@@ -257,7 +287,7 @@ module ZChipAPI{
         case OrderType.TrainWorker:
           return "Train Worker";
         case OrderType.TrainArcher:
-          return "Train Worker";
+          return "Train Archer";
         case OrderType.TrainSoldier:
           return "Train Soldier";
         default:
@@ -458,13 +488,7 @@ module ZChipAPI{
 
       var units: Unit[] = this._innerScope.getUnits(mappedFilter).map(
         (unit: LWG.IUnit) => {
-          let superUnit = new Unit(unit, this);
-          // TODO: Create a unit factory instead of this shit!
-          if(superUnit.type == UnitType.Worker){
-              superUnit = new Worker(unit, this);
-          }
-
-          return superUnit;
+          return UnitFactory.createUnit(unit, this);
         }
       );
 
@@ -479,8 +503,25 @@ module ZChipAPI{
         }
       );
 
+      var mappedO = null;
+
+      if(o != null){
+        mappedO = {};
+        if(o.x != undefined){
+          mappedO["x"] = o.x;
+        }
+
+        if(o.y != undefined){
+          mappedO["y"] = o.y;
+        }
+
+        if(o.unit != undefined){
+          mappedO["unit"] = o.unit._innerUnit;
+        }
+      }
+
       var orderString = TypeMapper.getOrderName(order);
-      this._innerScope.order(orderString, innerUnits, o, chainCommands);
+      this._innerScope.order(orderString, innerUnits, mappedO, chainCommands);
     }
 
     // Gets a collection of buildings based on a filter.
@@ -524,16 +565,7 @@ module ZChipAPI{
 
       var buildings: Building[] = this._innerScope.getBuildings(mappedFilter).map(
         (unit: LWG.IUnit) => {
-          let superBuilding = new Building(unit, this);
-          // TODO: Create a building factory instead of this shit!
-          if(
-            superBuilding.type == BuildingType.Castle
-            || superBuilding.type == BuildingType.Forge
-            || superBuilding.type == BuildingType.Barracks
-          ){
-            superBuilding = new ProductionBuilding(unit, this);
-          }
-          return superBuilding;
+          return BuildingFactory.createBuilding(unit, this);
         }
       );
 
@@ -738,7 +770,7 @@ module ZChipAPI{
 
     // Command the worker to mine the mine.
     mine(mine: Mine){
-      this._scope.order(ZChipAPI.OrderType.Mine, [this], mine, this.chainCommandMode);
+      this._scope.order(ZChipAPI.OrderType.Mine, [this], {unit: mine}, this.chainCommandMode);
     }
   }
 
