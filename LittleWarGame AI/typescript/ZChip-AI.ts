@@ -70,7 +70,7 @@ class Cache{
   private _soldiers: ZChipAPI.Unit[];
   get soldiers(): ZChipAPI.Unit[]{
     if(this._soldiers == null){
-      this._soldiers = this._scope.getUnits({type: "Soldier", player: this._scope.playerNumber});
+      this._soldiers = this._scope.getUnits({type: ZChipAPI.UnitType.Soldier, player: this._scope.playerNumber});
     }
 
     return this._soldiers;
@@ -80,7 +80,7 @@ class Cache{
   private _archers: ZChipAPI.Unit[];
   get archers(): ZChipAPI.Unit[]{
     if(this._archers == null){
-      this._archers = this._scope.getUnits({type: "Archer", player: this._scope.playerNumber});
+      this._archers = this._scope.getUnits({type: ZChipAPI.UnitType.Archer, player: this._scope.playerNumber});
     }
 
     return this._archers;
@@ -90,7 +90,7 @@ class Cache{
   private _army: ZChipAPI.Unit[];
   get army(): ZChipAPI.Unit[]{
     if(this._army == null){
-      this._army = this._scope.getUnits({notOftype: ZChipAPI.UnitType.Worker, player: this._scope.playerNumber});
+      this._army = this._scope.getUnits({notOfType: ZChipAPI.UnitType.Worker, player: this._scope.playerNumber});
     }
 
     return this._army;
@@ -130,7 +130,7 @@ class Cache{
   private _castles: ZChipAPI.ProductionBuilding[];
   get castles(): ZChipAPI.ProductionBuilding[]{
     if(this._castles == null){
-      this._castles = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: "Castle"});
+      this._castles = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.Castle});
     }
 
     return this._castles;
@@ -140,7 +140,7 @@ class Cache{
   private _mines: ZChipAPI.Mine[];
   get mines(): ZChipAPI.Mine[]{
     if(this._mines == null){
-      this._mines = this._scope.getBuildings({type: "Goldmine"}).map(
+      this._mines = this._scope.getBuildings({type: ZChipAPI.BuildingType.Mine}).map(
         (building: ZChipAPI.Building) =>{
           return <ZChipAPI.Mine>building;
         }
@@ -154,7 +154,7 @@ class Cache{
   private _barracks: ZChipAPI.ProductionBuilding[];
   get barracks(): ZChipAPI.ProductionBuilding[]{
     if(this._barracks == null){
-      this._barracks = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: "Barracks"});
+      this._barracks = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.Barracks});
     }
 
     return this._barracks;
@@ -164,7 +164,7 @@ class Cache{
   private _forges: ZChipAPI.Building[];
   get forges(): ZChipAPI.Building[]{
     if(this._forges == null){
-      this._forges = this._scope.getBuildings({player: this._scope.playerNumber, type: "Forge"});
+      this._forges = this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.Forge});
     }
 
     return this._forges;
@@ -174,7 +174,7 @@ class Cache{
   private _watchtowers: ZChipAPI.Building[];
   get watchtowers(): ZChipAPI.Building[]{
     if(this._watchtowers == null){
-      this._watchtowers = this._scope.getBuildings({player: this._scope.playerNumber, type: "Watchtower"});
+      this._watchtowers = this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.Watchtower});
     }
 
     return this._watchtowers;
@@ -184,7 +184,7 @@ class Cache{
   private _houses: ZChipAPI.Building[];
   get houses(): ZChipAPI.Building[]{
     if(this._houses == null){
-      this._houses = this._scope.getBuildings({player: this._scope.playerNumber, type: "House"});
+      this._houses = this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.House});
     }
 
     return this._houses;
@@ -417,7 +417,7 @@ class ConstructionCommander extends CommanderBase{
 
   // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
   buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType):boolean{
-    console.log("Building " + type.toString());
+    console.log("Building Type " + type.toString());
     var cost = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Cost);
     if(cost > this._scope.currentGold){
       return false;
@@ -791,8 +791,10 @@ class GrandCommander extends CommanderBase{
   combatCommander: CombatCommander;
 
   executeOrders():void{
-    // Economic Orders.
     var primaryBase:ZChipAPI.Building = this.selectPrimaryBase();
+    console.log("Executing Orders.");
+
+    // Economic Orders.
     this.economyCommander.assignIdleWorkers();
     var expansionTarget: ZChipAPI.Mine = this.economyCommander.considerExpansion(primaryBase);
 

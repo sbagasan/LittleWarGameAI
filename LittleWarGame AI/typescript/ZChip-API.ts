@@ -146,7 +146,7 @@ module ZChipAPI{
         case BuildingType.Forge:
           return "Forge";
         case BuildingType.House:
-          return "Hosue";
+          return "House";
         case BuildingType.Barracks:
           return "Barracks";
         default:
@@ -458,7 +458,13 @@ module ZChipAPI{
 
       var units: Unit[] = this._innerScope.getUnits(mappedFilter).map(
         (unit: LWG.IUnit) => {
-          return new Unit(unit, this);
+          let superUnit = new Unit(unit, this);
+          // TODO: Create a unit factory instead of this shit!
+          if(superUnit.type == UnitType.Worker){
+              superUnit = new Worker(unit, this);
+          }
+
+          return superUnit;
         }
       );
 
@@ -487,38 +493,47 @@ module ZChipAPI{
       }
 
       var notOfType: BuildingType = filter.notOfType;
-      if(type != undefined){
+      if(notOfType != undefined){
         mappedFilter[HiddenMagicStrings.filterNotOfTypePropertyName] = TypeMapper.getBuildingName(notOfType);
       }
 
       var player: number = filter.player;
-      if(type != undefined){
+      if(player != undefined){
         mappedFilter[HiddenMagicStrings.filterPlayerPropertyName] = player;
       }
 
       var team: number = filter.team;
-      if(type != undefined){
+      if(team != undefined){
         mappedFilter[HiddenMagicStrings.filterTeamPropertyName] = team;
       }
 
       var enemyOf: number = filter.enemyOf;
-      if(type != undefined){
+      if(enemyOf != undefined){
         mappedFilter[HiddenMagicStrings.filterEnemyOfPropertyName] = enemyOf;
       }
 
       var order: OrderType = filter.order;
-      if(type != undefined){
+      if(order != undefined){
         mappedFilter[HiddenMagicStrings.filterOrderPropertyName] = TypeMapper.getOrderName(order);
       }
 
       var onlyFinished: boolean = filter.onlyFinished;
-      if(type != undefined){
+      if(onlyFinished != undefined){
         mappedFilter[HiddenMagicStrings.filterOnlyFinishedPropertyName] = onlyFinished;
       }
 
-      var buildings: Building[] = this._innerScope.getUnits(mappedFilter).map(
+      var buildings: Building[] = this._innerScope.getBuildings(mappedFilter).map(
         (unit: LWG.IUnit) => {
-          return new Building(unit, this);
+          let superBuilding = new Building(unit, this);
+          // TODO: Create a building factory instead of this shit!
+          if(
+            superBuilding.type == BuildingType.Castle
+            || superBuilding.type == BuildingType.Forge
+            || superBuilding.type == BuildingType.Barracks
+          ){
+            superBuilding = new ProductionBuilding(unit, this);
+          }
+          return superBuilding;
         }
       );
 
@@ -532,7 +547,7 @@ module ZChipAPI{
 
     // Determines if a position is in the immediate vicinity of a gold mine.
   	positionIsNearMine(x, y): boolean{
-      var mines = this.getBuildings({type: TypeMapper.getBuildingName(BuildingType.Mine)});
+      var mines = this.getBuildings({type: BuildingType.Mine});
   		for(var i = 0; i < mines.length; i++){
   			var mine = mines[i];
   			var distance = this.getDistance(x, y, mine.x, mine.y);
