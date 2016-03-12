@@ -404,16 +404,10 @@ class ConstructionCommander extends CommanderBase{
         var positionIsNearMine:boolean = false;
 
         // We don't care if we're near a mine unless it is a castle.
-        if(type = ZChipAPI.BuildingType.Castle){
+        if(type == ZChipAPI.BuildingType.Castle){
           positionIsNearMine= this._scope.positionIsNearMine(i, j);
         }
 
-        console.log("Trying to place");
-        console.log(ZChipAPI.TypeMapper.getBuildingName(type));
-        console.log(positionPathable);
-        console.log(positionOnRamp);
-        console.log(positionIsNearMine);
-        console.log(!positionPathable || positionOnRamp || positionIsNearMine);
         if(!positionPathable || positionOnRamp || positionIsNearMine){
           return false;
         }
@@ -449,9 +443,12 @@ class ConstructionCommander extends CommanderBase{
     var buildPosition: ZChipAPI.Point = Util.spiralSearch(
       baseBuilding.x,
       baseBuilding.y,
-      (x:number, y:number):boolean =>{
-        return this.canPlaceBuilding(type, x, y, this._baseSpacing);
-      },
+      // TODO: Try reverting this back to a lambda now that the actual issue was found.
+      (function(self:ConstructionCommander, buildingPlacementType: ZChipAPI.BuildingType):(x:number, y:number) => boolean {
+        return function(x:number, y:number):boolean{
+          return self.canPlaceBuilding(buildingPlacementType, x, y, self._baseSpacing);
+        }
+      })(this, type),
       this._maxBaseSize);
 
     if(buildPosition == null){
