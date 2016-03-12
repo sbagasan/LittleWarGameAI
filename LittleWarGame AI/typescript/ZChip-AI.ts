@@ -218,6 +218,20 @@ class Cache{
     return this._enemyUnits;
   }
 
+  // Gets a list of enemy units that are visible.
+  private _enemyArmy: ZChipAPI.Unit[];
+  get enemyArmy():ZChipAPI.Unit[]{
+    if(this._enemyArmy == null){
+      this._enemyArmy = this._scope.getUnits({enemyOf: this._scope.playerNumber, notOfType: ZChipAPI.UnitType.Worker}).filter(
+        (unit: ZChipAPI.Unit) =>{
+          return !unit.isNeutral;
+        }
+      );
+    }
+
+    return this._enemyArmy;
+  }
+
   private _undepletedMines: ZChipAPI.Mine[];
   get undepletedMines():ZChipAPI.Mine[]{
     if(this._undepletedMines == null){
@@ -419,7 +433,7 @@ class ConstructionCommander extends CommanderBase{
 
   // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
   buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType):boolean{
-    console.log("Building Type " + ZChipAPI.TypeMapper.getBuildingName(type));
+    console.log("Building Type " + type);
     var cost = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Cost);
     if(cost > this._scope.currentGold){
       return false;
@@ -443,7 +457,6 @@ class ConstructionCommander extends CommanderBase{
     var buildPosition: ZChipAPI.Point = Util.spiralSearch(
       baseBuilding.x,
       baseBuilding.y,
-      // TODO: Try reverting this back to a lambda now that the actual issue was found.
       (function(self:ConstructionCommander, buildingPlacementType: ZChipAPI.BuildingType):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
           return self.canPlaceBuilding(buildingPlacementType, x, y, self._baseSpacing);
@@ -674,6 +687,9 @@ class CombatCommander extends CommanderBase{
   // How close a unit must get to a goldmine to determine if there is an enemy base there.
   checkMineForBaseDistance: number;
 
+  // A list of the hitpoints last turn.
+  private _oldHitpoints: number[];
+
   // Returns a list of mines to scout in priority order.
   getScoutMinePriority(): ZChipAPI.Mine[]{
     console.log("Prioritizing scouting");
@@ -720,14 +736,63 @@ class CombatCommander extends CommanderBase{
     return attackedUnits;
   }
 
+  // Filters the scout out of the collection of units and returns the result.
+  excludeScoutFromUnits(units: ZChipAPI.Unit[]): ZChipAPI.Unit[]{
+    var nonScoutUnits: ZChipAPI.Unit[] = units.filter((unit: ZChipAPI.Unit) => {
+      if(this.scout != null && this.scout.equals(unit)){
+        return false;
+      }
+
+      return true;
+    });
+
+    return nonScoutUnits;
+  }
+
+  setBehaviourCoward(units: ZChipAPI.Unit[]){
+    if(this._cache.enemyArmy.length == 0){
+      return;
+    }
+
+    let runaways: ZChipAPI.Unit[] = this.getAttackedUnits(units, this._oldHitpoints);
+    let center = this._scope.getCenterOfUnits(this._cache.enemyArmy);
+
+    for(let i = 0; i < runaways.length; i++){
+      let runaway = runaways[i];
+      let x = runaway.x - center.x;
+      let y = runaway.y - center.y;
+      runaway.move(runaway.x + x, runaway.y + y);
+    }
+  }
+
+  // Commands all specified units to attack the lowest health target in their range.
+  setBehaviourVulture(units: ZChipAPI.Unit[]){
+    var enemyArmy = this._cache.enemyArmy;
+    var sortedEnemies = enemyArmy.sort((a:ZChipAPI.Unit, b:ZChipAPI.Unit): number => {
+      return a.hitpoints - b.hitpoints;
+    });
+
+    for(let i = 0 ; i < units.length; i++){
+      let unit = units[i];
+      let type = unit.type;
+      let range = this._scope.getUnitTypeFieldValue(type, ZChipAPI.TypeField.Range);
+      for(let j = 0; j < sortedEnemies.length; j++){
+        let enemy = sortedEnemies[j];
+
+        if(this._scope.getDistance(unit.x, unit.y, enemy.x, enemy.y) < range){
+          unit.attack(enemy);
+          break;
+        }
+      }
+    }
+  }
+
   // Returns the unit to the specified building.
   returnArmyToBase(base: ZChipAPI.Building):void{
-    for(let i = 0; i < this._cache.army.length; i++){
-      var fighter = this._cache.army[i];
-
-      if(this.scout == null || !fighter.equals(this.scout)){
-        fighter.moveTo(base);
-      }
+    var nonScoutArmy = this.excludeScoutFromUnits(this._cache.army);
+    for(let i = 0; i < nonScoutArmy.length; i++){
+      var fighter = nonScoutArmy[i];
+      fighter.moveTo(base);
     }
   }
 
@@ -746,16 +811,15 @@ class CombatCommander extends CommanderBase{
 
   // Orders units other than the scout to attack move to the coordinate.
   private attackExcludeScout(x:number, y:number):void{
-    for(let i = 0; i < this._cache.army.length; i++){
-      var fighter = this._cache.army[i];
-      if(this.scout == null || !fighter.equals(this.scout)){
-        fighter.attackTo(x, y);
-      }
+    var nonScoutArmy = this.excludeScoutFromUnits(this._cache.army);
+    for(let i = 0; i < nonScoutArmy.length; i++){
+      var fighter = nonScoutArmy[i];
+      fighter.attackTo(x, y);
     }
   }
 
-  executeCombatOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
-    console.log("Executing Combat Orders.");
+  // Selects a scout and orders that scout to move.
+  private issueScoutOrders():void{
     if(this.scout == undefined){
       this.scout = null;
     }
@@ -769,38 +833,8 @@ class CombatCommander extends CommanderBase{
       this.scout = null;
     }
 
-    if(this.attackMode == false && this._cache.army.length > this.attackArmySize){
-      this._scope.chatMessage("General Z is thinking: I'm ready to attack!");
-      this.attackMode = true;
-    }
-    else if(this.attackMode == true && this._cache.army.length < this.minimumArmySize){
-      this._scope.chatMessage("General Z is thinking: My army has been decimated!");
-      this.attackMode = false;
-    }
-
-    if(this._cache.enemyUnits.length > 0){
-      let target = this._scope.getCenterOfUnits(this._cache.enemyUnits);
-      this.attackExcludeScout(target.x, target.y);
-		}
-		else if(expansionTarget != null){
-      this.attackExcludeScout(expansionTarget.x, expansionTarget.y);
-		}
-		else if(this.attackMode == false){
-			this.returnArmyToBase(primaryBase);
-		}
-		else if(this.attackMode == true && this._cache.enemyBuildings.length > 0){
-			// TODO prioritize target.
-			var targetBuilding = this._cache.enemyBuildings[0];
-      this.attackExcludeScout(targetBuilding.x, targetBuilding.y);
-		}
-		else if(this.attackMode == true && this.suspectedBases.length > 0){
-      // TODO: Also check out suspected bases.
-		}
-		else{
-			this.returnArmyToBase(primaryBase);
-		}
-
-		if(this._cache.army.length > this.minimumArmySize && this.scout == null){
+    if(this._cache.army.length > this.minimumArmySize && this.scout == null){
+      // TODO: limit or prioritize unit type so expensive units aren't used.
 			this.scout = this._cache.army[0];
 			this.scout.stop();
 			this._scope.chatMessage("General Z is thinking: I've selected a new scout.");
@@ -813,6 +847,65 @@ class CombatCommander extends CommanderBase{
 				this._scope.chatMessage("General Z is thinking: Let's take a look over here...");
 			}
 		}
+  }
+
+  // Sets or unsets attack mode.
+  private setAttackMode():void{
+    if(this.attackMode == false && this._cache.army.length > this.attackArmySize){
+      this._scope.chatMessage("General Z is thinking: I'm ready to attack!");
+      this.attackMode = true;
+    }
+    else if(this.attackMode == true && this._cache.army.length < this.minimumArmySize){
+      this._scope.chatMessage("General Z is thinking: My army has been decimated!");
+      this.attackMode = false;
+    }
+  }
+
+  // Issues general attack and retreat orders.
+  private issueGeneralOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
+    if(this._cache.enemyUnits.length > 0){
+      let target = this._scope.getCenterOfUnits(this._cache.enemyUnits);
+      this.attackExcludeScout(target.x, target.y);
+    }
+    else if(expansionTarget != null){
+      this.attackExcludeScout(expansionTarget.x, expansionTarget.y);
+    }
+    else if(this.attackMode == false){
+      this.returnArmyToBase(primaryBase);
+    }
+    else if(this.attackMode == true && this._cache.enemyBuildings.length > 0){
+      // TODO prioritize target.
+      var targetBuilding = this._cache.enemyBuildings[0];
+      this.attackExcludeScout(targetBuilding.x, targetBuilding.y);
+    }
+    else if(this.attackMode == true && this.suspectedBases.length > 0){
+      // TODO: Also check out suspected bases.
+    }
+    else{
+      this.returnArmyToBase(primaryBase);
+    }
+  }
+
+  // Issues individual micro commands.
+  private issueMicroOrders(): void{
+    var combatArchers = this.excludeScoutFromUnits(this._cache.archers);
+    this.setBehaviourVulture(combatArchers);
+    this.setBehaviourCoward(combatArchers);
+  }
+
+  // Issues all combat orders to units.
+  executeCombatOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
+    console.log("Executing Combat Orders.");
+
+    this.setAttackMode();
+
+    this.issueScoutOrders();
+
+    this.issueGeneralOrders(expansionTarget, primaryBase);
+
+    this.issueMicroOrders();
+
+    this._oldHitpoints = this.getUnitHitpoints(this._cache.army);
   }
 
   constructor(minimumArmySize:number, attackArmySize:number, upgradeRatio: number, attackedDamageThreshold:number){
@@ -886,8 +979,8 @@ class Settings{
   static minimumArmySize: number = 3;
   static attackArmySize:number= 10;
   static upgradeRatio:number = 1; // Should be 5.
-  static attackedDamageThreshold: number = 10;
-  static maxMineDistance: number = 10;
+  static attackedDamageThreshold: number = 1;
+  static maxMineDistance: number = 12;
   static maxWorkersPerGoldmine:number = 10;
   static baseSpacing: number = 2;
   static watchtowersPerCastle: number = 0; // Should be 1.

@@ -93,12 +93,13 @@ module ZChipAPI{
     static filterOnlyFinishedPropertyName: string = "onlyFinshed";
   }
 
-//TODO: don't export this. This is just for testing.
   // Maps type enums to and from string values.
-  export class TypeMapper{
+  class TypeMapper{
     // Gets the type identifier from the type name.
     static getTypeId(typeName):string{
       switch(typeName){
+        case "Armour":
+          return "upgarmor";
         case "Damage":
           return "upgattack";
         default:
@@ -241,8 +242,12 @@ module ZChipAPI{
           return OrderType.UpgradeAttack;
         case "Moveto":
           return OrderType.MoveTo;
+        case "Move":
+          return OrderType.Move;
         case "AMove":
           return OrderType.AttackMove;
+        case "Attack":
+          return OrderType.Attack;
         case "Train Worker":
           return OrderType.TrainWorker;
         case "Train Archer":
@@ -267,6 +272,8 @@ module ZChipAPI{
       switch(type){
         case UpgradeType.AttackUpgrades:
           return OrderType.UpgradeAttack;
+        case UpgradeType.ArmourUpgrades:
+          return OrderType.UpgradeArmour;
         default:
           throw "No order mapping for upgrade named: " + UpgradeType.toString();
       }
@@ -276,6 +283,8 @@ module ZChipAPI{
       switch(type){
         case UpgradeType.AttackUpgrades:
           return "Damage";
+        case UpgradeType.ArmourUpgrades:
+          return "Armor";
         default:
           throw "No mapping for upgrade type:" + UpgradeType.toString();
       }
@@ -285,6 +294,8 @@ module ZChipAPI{
       switch(upgradeName){
         case "Damage":
           return UpgradeType.AttackUpgrades;
+        case "Armor":
+          return UpgradeType.ArmourUpgrades;
         default:
           return null;
       }
@@ -310,10 +321,16 @@ module ZChipAPI{
           return "Build Barracks";
         case OrderType.UpgradeAttack:
           return "Attack Upgrade";
+        case OrderType.UpgradeArmour:
+          return "Armor Upgrade";
         case OrderType.MoveTo:
           return "Moveto";
+        case OrderType.Move:
+          return "Move";
         case OrderType.AttackMove:
           return "AMove";
+        case OrderType.Attack:
+          return "Attack";
         case OrderType.TrainWorker:
           return "Train Worker";
         case OrderType.TrainArcher:
@@ -333,25 +350,31 @@ module ZChipAPI{
           return "cost";
         case TypeField.MaxHitpoints:
           return "hp";
+        case TypeField.Range:
+          return "range";
       }
     }
   }
 
   export enum UpgradeType{
-    AttackUpgrades
+    AttackUpgrades,
+    ArmourUpgrades
   }
 
   export enum TypeField{
     Size,
     Cost,
-    MaxHitpoints
+    MaxHitpoints,
+    Range
   }
 
   // Represents all orders.
   export enum OrderType{
     Stop,
     MoveTo,
+    Move,
     AttackMove,
+    Attack,
     Mine,
     Repair,
     BuildCastle,
@@ -362,7 +385,8 @@ module ZChipAPI{
     TrainWorker,
     TrainArcher,
     TrainSoldier,
-    UpgradeAttack
+    UpgradeAttack,
+    UpgradeArmour
   }
 
   // Represents building types.
@@ -776,12 +800,21 @@ module ZChipAPI{
 
     // Orders the unit to move to the specified building.
     moveTo(building: Building):void{
-      this._scope.order(OrderType.MoveTo, [this], {unit: building}, this.chainCommandMode)
+      this._scope.order(OrderType.MoveTo, [this], {unit: building}, this.chainCommandMode);
+    }
+
+    move(x:number, y:number):void{
+      this._scope.order(OrderType.Move, [this], {x:x, y:y}, this.chainCommandMode);
     }
 
     // Orders the unit to attack move to the coordiantes.
     attackTo(x: number, y:number):void{
       this._scope.order(OrderType.AttackMove, [this], {x:x, y:y}, this.chainCommandMode);
+    }
+
+    // Orders the unit to attack the target unit or building.
+    attack(target: ZChipAPI.GameEntity):void{
+      this._scope.order(OrderType.Attack, [this], {unit: target}, this.chainCommandMode);
     }
 
     constructor(innerUnit: LWG.IUnit, scope:Scope){
