@@ -750,7 +750,7 @@ class CombatCommander extends CommanderBase{
   }
 
   // Commands the indicated units to all focus on a single enemy.
-  setFocusFireBehaviour(units: ZChipAPI.Unit[], target: ZChipAPI.Unit){
+  setFocusFireBehaviour(units: ZChipAPI.Unit[], target: ZChipAPI.GameEntity){
     for(let i = 0; i < units.length; i++){
       units[i].attack(target);
     }
@@ -896,9 +896,15 @@ class CombatCommander extends CommanderBase{
 
   // Issues individual micro commands.
   private issueMicroOrders(): void{
-    var combatArchers = this.excludeScoutFromUnits(this._cache.archers);
+    /*var combatArchers = this.excludeScoutFromUnits(this._cache.archers);
+
+    var archerCenter = this._scope.getCenterOfUnits(combatArchers);
+    var enemies = this._cache.enemyArmy;
+    var mostCentralEnemy = this._scope.getClosest(archerCenter.x, archerCenter.y, enemies);
+
+    this.setFocusFireBehaviour(combatArchers, mostCentralEnemy);
     this.setBehaviourVulture(combatArchers);
-    this.setBehaviourCoward(combatArchers);
+    this.setBehaviourCoward(combatArchers);*/
   }
 
   // Issues all combat orders to units.
@@ -987,7 +993,7 @@ class Settings{
   static minimumArmySize: number = 3;
   static attackArmySize:number= 10;
   static upgradeRatio:number = 1; // Should be 5.
-  static attackedDamageThreshold: number = 10;
+  static attackedDamageThreshold: number = 1;
   static maxMineDistance: number = 12;
   static maxWorkersPerGoldmine:number = 10;
   static baseSpacing: number = 2;
