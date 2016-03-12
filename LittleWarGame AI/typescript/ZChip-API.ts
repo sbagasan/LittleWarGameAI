@@ -93,11 +93,14 @@ module ZChipAPI{
     static filterOnlyFinishedPropertyName: string = "onlyFinshed";
   }
 
+//TODO: don't export this. This is just for testing.
   // Maps type enums to and from string values.
-  class TypeMapper{
+  export class TypeMapper{
     // Gets the type identifier from the type name.
     static getTypeId(typeName):string{
       switch(typeName){
+        case "Damage":
+          return "upgattack";
         default:
           return typeName.toLowerCase();
       }
@@ -260,6 +263,33 @@ module ZChipAPI{
       }
     }
 
+    static getOrderTypeFromUpgradeType(type: UpgradeType): OrderType{
+      switch(type){
+        case UpgradeType.AttackUpgrades:
+          return OrderType.UpgradeAttack;
+        default:
+          throw "No order mapping for upgrade named: " + UpgradeType.toString();
+      }
+    }
+
+    static getUpgradeName(type:UpgradeType): string{
+      switch(type){
+        case UpgradeType.AttackUpgrades:
+          return "Damage";
+        default:
+          throw "No mapping for upgrade type:" + UpgradeType.toString();
+      }
+    }
+
+    static getUpgradeType(upgradeName: string): UpgradeType{
+      switch(upgradeName){
+        case "Damage":
+          return UpgradeType.AttackUpgrades;
+        default:
+          return null;
+      }
+    }
+
     static getOrderName(type: OrderType): string{
       switch(type){
         case OrderType.Stop:
@@ -357,6 +387,12 @@ module ZChipAPI{
     // The wrapped little war game object.
     private _innerScope: LWG.IScope;
 
+    // Returns the current upgrade level of the specified upgrade type.
+    getUpgradeLevel(type: UpgradeType):number{
+      var upgradeName = TypeMapper.getUpgradeName(type);
+      return this._innerScope.getUpgradeLevel(upgradeName);
+    }
+
     // Gets the center point of a list of units.
     getCenterOfUnits(units: GameEntity[]): Point{
       var innerUnits: LWG.IUnit[] = units.map(
@@ -378,6 +414,11 @@ module ZChipAPI{
     get teamNumber(): number{
       return this._innerScope.getMyTeamNumber();
     };
+
+    // The start position for the specified player.
+    getStartPosition(player: number){
+      return this._innerScope.getStartLocationForPlayerNumber(player);
+    }
 
     // The AI's starting position.
     get startPosition(): LWG.IPoint{
@@ -602,12 +643,12 @@ module ZChipAPI{
     }
 
     // Gets the closest unit out of a list of units.
-  	getClosest(referenceUnit: GameEntity, targetUnits: GameEntity[]): GameEntity{
+  	getClosest(x: number, y: number, targetUnits: GameEntity[]): GameEntity{
   		var closest: GameEntity = null;
   		var closestDistance: number = Number.MAX_VALUE;
   		for(let i: number = 0; i < targetUnits.length; i++){
   			var targetUnit: GameEntity = targetUnits[i];
-  			var distanceToTarget: number = this.getDistance(referenceUnit.x, referenceUnit.y, targetUnit.x, targetUnit.y);
+  			var distanceToTarget: number = this.getDistance(x, y, targetUnit.x, targetUnit.y);
   			if(distanceToTarget < closestDistance){
   				closest = targetUnit;
   				closestDistance = distanceToTarget;
@@ -632,6 +673,14 @@ module ZChipAPI{
 
     getUnitTypeFieldValue(type: UnitType, field: TypeField): any{
       var typeName: string = TypeMapper.getUnitName(type);
+      var typeId: string = TypeMapper.getTypeId(typeName);
+      var fieldName: string = TypeMapper.getTypeFieldName(field);
+
+      return this._innerScope.getTypeFieldValue(typeId, fieldName);
+    }
+
+    getUpgradeTypeFieldValue(type: UpgradeType, field: TypeField): any{
+      var typeName: string = TypeMapper.getUpgradeName(type);
       var typeId: string = TypeMapper.getTypeId(typeName);
       var fieldName: string = TypeMapper.getTypeFieldName(field);
 
@@ -804,17 +853,49 @@ module ZChipAPI{
       super(innerUnit, scope);
     }
 
-    // TODO: get upgrade production at queue.
+    // Gets the upgrade currently in production at the queue index, or null if no upgrade is in production at that index.
+    getUpgradeProductionAtQueue(index: number):UpgradeType{
+      return TypeMapper.getUpgradeType(this._innerUnit.getUnitTypeNameInProductionQueAt(index + 1));
+    }
 
-    trainUnit(type: ZChipAPI.UnitType): void{
-      var trainCommand: OrderType = TypeMapper.getTrainOrderFromUnitType(type);
+    trainUnit(type: ZChipAPI.UnitType): boolean{
+      var cost = this._scope.getUnitTypeFieldValue(type, TypeField.Cost);
 
-      this._scope.order(trainCommand, [this], null, this.chainCommandMode);
+      if(this._scope.currentGold < cost){
+        return false;
+      }
+      else{
+        var trainCommand: OrderType = TypeMapper.getTrainOrderFromUnitType(type);
+        this._scope.order(trainCommand, [this], null, this.chainCommandMode);
+        return true;
+      }
+    }
+
+    // Research the specified upgrade.
+    researchUpgrade(type: ZChipAPI.UpgradeType): boolean{
+      var cost = this._scope.getUpgradeTypeFieldValue(type, TypeField.Cost);
+
+      if(this._scope.currentGold < cost){
+        return false;
+      }
+      else{
+        var researchCommand: ZChipAPI.OrderType = TypeMapper.getOrderTypeFromUpgradeType(type);
+        this._scope.order(researchCommand, [this], null, this.chainCommandMode);
+        return true;
+      }
     }
 
     // Gets the unit currently in production at the queue index, or null if no unit is in production at that index.
     getUnitProductionAtQueue(index: number):UnitType{
       return TypeMapper.getUnitType(this._innerUnit.getUnitTypeNameInProductionQueAt(index + 1));
+    }
+
+    // Returns if the building is busy training or upgrading.
+    get isBusy(): boolean{
+      if(this.getUpgradeProductionAtQueue(0) == null && this.getUnitProductionAtQueue(0) == null){
+        return false;
+      }
+      return true;
     }
   }
 

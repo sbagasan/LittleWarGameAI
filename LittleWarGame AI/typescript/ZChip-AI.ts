@@ -161,10 +161,10 @@ class Cache{
   };
 
   // Gets a list of the player's forges.
-  private _forges: ZChipAPI.Building[];
-  get forges(): ZChipAPI.Building[]{
+  private _forges: ZChipAPI.ProductionBuilding[];
+  get forges(): ZChipAPI.ProductionBuilding[]{
     if(this._forges == null){
-      this._forges = this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.Forge});
+      this._forges = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.Forge});
     }
 
     return this._forges;
@@ -283,7 +283,7 @@ class EconomyCommander extends CommanderBase{
     }
 
     var castleCost: number = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
-    var closestMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosest(currentBase, this._cache.undepletedMines);
+    var closestMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosest(currentBase.x, currentBase.y, this._cache.undepletedMines);
     if(closestMine == null){
       // Give up. There is no more gold to be had.
       return null;
@@ -302,7 +302,7 @@ class EconomyCommander extends CommanderBase{
 				return m !== closestMine;
 			});
 
-      var nextMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosest(currentBase, expansionCandidates);
+      var nextMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosest(currentBase.x, currentBase.y, expansionCandidates);
       if(nextMine == null){
         // Give up. There is no more gold to be had.
         return null;
@@ -329,10 +329,10 @@ class EconomyCommander extends CommanderBase{
     console.log(workers);
     for (var i = 0; i < workers.length; i++){
       var worker = workers[i];
-      var closestBase = this._scope.getClosest(worker, this._cache.castles);
+      var closestBase = this._scope.getClosest(worker.x, worker.y, this._cache.castles);
       console.log(closestBase);
       if(closestBase != null){
-        var closestMine = <ZChipAPI.Mine>this._scope.getClosest(closestBase, this._cache.undepletedMines);
+        var closestMine = <ZChipAPI.Mine>this._scope.getClosest(closestBase.x, closestBase.y, this._cache.undepletedMines);
         console.log(closestMine);
         if(closestMine != null){
           worker.mine(closestMine);
@@ -366,7 +366,7 @@ class ConstructionCommander extends CommanderBase{
 			for(let i: number = 0; i < this._cache.buildings.length; i++){
 				let building: ZChipAPI.Building = this._cache.buildings[i];
 				if(!building.isFinished){
-					let worker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosest(building, availibleWorkers);
+					let worker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosest(building.x, building.y, availibleWorkers);
 					if(worker != null){
 						worker.repair(building);
 					}
@@ -379,7 +379,7 @@ class ConstructionCommander extends CommanderBase{
 				let building = this._cache.completeBuildings[i];
 
 				if(building.hitpoints < this._scope.getBuildingTypeFieldValue(building.type, ZChipAPI.TypeField.MaxHitpoints)){
-					let worker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosest(building, availibleWorkers);
+					let worker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosest(building.x, building.y, availibleWorkers);
 					if(worker != null){
             this._scope.chatMessage("General Z is thinking: This is why we can't have nice things.");
             worker.repair(building);
@@ -401,13 +401,19 @@ class ConstructionCommander extends CommanderBase{
 
         var positionPathable:boolean = this._scope.positionIsPathable(i, j);
         var positionOnRamp:boolean = this._scope.positionIsOnRamp(i, j);
-        var positionIsNearMine:boolean = null;
+        var positionIsNearMine:boolean = false;
 
         // We don't care if we're near a mine unless it is a castle.
         if(type = ZChipAPI.BuildingType.Castle){
           positionIsNearMine= this._scope.positionIsNearMine(i, j);
         }
 
+        console.log("Trying to place");
+        console.log(ZChipAPI.TypeMapper.getBuildingName(type));
+        console.log(positionPathable);
+        console.log(positionOnRamp);
+        console.log(positionIsNearMine);
+        console.log(!positionPathable || positionOnRamp || positionIsNearMine);
         if(!positionPathable || positionOnRamp || positionIsNearMine){
           return false;
         }
@@ -419,7 +425,7 @@ class ConstructionCommander extends CommanderBase{
 
   // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
   buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType):boolean{
-    console.log("Building Type " + type.toString());
+    console.log("Building Type " + ZChipAPI.TypeMapper.getBuildingName(type));
     var cost = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Cost);
     if(cost > this._scope.currentGold){
       return false;
@@ -434,7 +440,7 @@ class ConstructionCommander extends CommanderBase{
       }
     }
 
-    var closestWorker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosest(baseBuilding, nonBuildingWorkers);
+    var closestWorker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosest(baseBuilding.x, baseBuilding.y, nonBuildingWorkers);
 
     if(closestWorker == null){
       return false;
@@ -473,7 +479,21 @@ class ConstructionCommander extends CommanderBase{
     return buildings;
   }
 
-  // TODO: Get Current Upgrades.
+  // Gets a list of all upgrades currently underway.
+  getUpgradesInProgress(): ZChipAPI.UpgradeType[]{
+    var upgrades: ZChipAPI.UpgradeType[] = [];
+
+    // TODO: For all production buildings.
+    for(let i = 0; i < this._cache.forges.length; i++){
+      var upgrader: ZChipAPI.ProductionBuilding = this._cache.forges[i];
+      var upgrade = upgrader.getUpgradeProductionAtQueue(0);
+      if(upgrade != null){
+        upgrades.push(upgrade);
+      }
+    }
+
+    return upgrades;
+  }
 
   // Executes the build orders as determined by the priority.
   executeBuildOrders(priority: ConstructionCommanderAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedArmyUnit: ZChipAPI.UnitType){
@@ -512,7 +532,7 @@ class ConstructionCommander extends CommanderBase{
           for(let i = 0; i < this._cache.castles.length; i++){
             let castle: ZChipAPI.ProductionBuilding = this._cache.castles[i];
 
-            if(castle.getUnitProductionAtQueue(0) == null){
+            if(!castle.isBusy){
               castle.trainUnit(ZChipAPI.UnitType.Worker);
             }
           }
@@ -550,12 +570,20 @@ class ConstructionCommander extends CommanderBase{
           for(let i = 0; i < this._cache.barracks.length; i++){
             let singleBarracks = this._cache.barracks[i];
 
-            if(singleBarracks.getUnitProductionAtQueue(0) == null){
+            if(!singleBarracks.isBusy){
               singleBarracks.trainUnit(prefferedArmyUnit);
             }
           }
           break;
-        // TODO: Upgrades.
+        case ConstructionCommanderAction.UpgradeAttack:
+          for(let i = 0; i < this._cache.forges.length; i++){
+            let forge = <ZChipAPI.ProductionBuilding>this._cache.forges[i];
+
+            if(!forge.isBusy){
+              forge.researchUpgrade(ZChipAPI.UpgradeType.AttackUpgrades);
+            }
+          }
+        break;
       }
     }
   }
@@ -589,7 +617,17 @@ class ConstructionCommander extends CommanderBase{
       }
     }
 
-    // TODO: upgrades.
+    let damageUpgradeLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades);
+    // TODO: 5 is a magic number. Baaad.
+    if(this._cache.forges.length > 0 && damageUpgradeLevel < 5 && this._cache.army.length / upgradeRatio > damageUpgradeLevel){
+      priorityQueue.push(ConstructionCommanderAction.UpgradeAttack);
+
+      let upgradeCost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.AttackUpgrades, ZChipAPI.TypeField.Cost) + (damageUpgradeLevel * 60);
+      if(this.getUpgradesInProgress().length < this._cache.forges.length && this._scope.currentGold < upgradeCost){
+        return priorityQueue;
+      }
+    }
+
 
     priorityQueue.push(ConstructionCommanderAction.TrainFighters);
 
@@ -642,7 +680,21 @@ class CombatCommander extends CommanderBase{
   // Returns a list of mines to scout in priority order.
   getScoutMinePriority(): ZChipAPI.Mine[]{
     console.log("Prioritizing scouting");
-    // TODO: Prioritize enemy start locations.
+    if(this.scoutOrder == null){
+      var scoutOrder = [];
+      var players = this._scope.players;
+      for(let i: number = 0; i < players.length; i++){
+        var player = players[i];
+        var location = this._scope.getStartPosition(players[i]);
+        if(player != this._scope.playerNumber){
+          var startingMine = this._scope.getClosest(location.x, location.y, this._cache.mines);
+          scoutOrder.push(startingMine);
+        }
+      }
+
+      return scoutOrder;
+    }
+
 
     return this._cache.mines;
   }
@@ -711,6 +763,10 @@ class CombatCommander extends CommanderBase{
       this.scout = null;
     }
 
+    if(this.scoutOrder == null || this.scoutOrder.length == 0){
+      this.scoutOrder = this.getScoutMinePriority();
+    }
+
     if(this.scout != null && this.scout.hitpoints < 1){
       // TODO: Add suspected bases.
       this.scout = null;
@@ -753,11 +809,6 @@ class CombatCommander extends CommanderBase{
 			this._scope.chatMessage("General Z is thinking: I've selected a new scout.");
 		}
 
-		if(this.scoutOrder.length == 0){
-			var mines = this.getScoutMinePriority();
-			this.scoutOrder = this.scoutOrder.concat(mines);
-		}
-
 		if(this.scout != null){
 			if(this.scout.currentOrder == ZChipAPI.OrderType.Stop){
 				var mine = this.scoutOrder.shift();
@@ -775,7 +826,7 @@ class CombatCommander extends CommanderBase{
     this.attackedDamageThreshold = attackedDamageThreshold;
 
     this.scout = null;
-    this.scoutOrder = [];
+    this.scoutOrder = null;
     this.attackMode = false;
     this.suspectedBases = [];
     this.checkMineForBaseDistance = 2;
@@ -837,12 +888,12 @@ class GrandCommander extends CommanderBase{
 class Settings{
   static minimumArmySize: number = 3;
   static attackArmySize:number= 10;
-  static upgradeRatio:number = 5;
+  static upgradeRatio:number = 1; // Should be 5.
   static attackedDamageThreshold: number = 10;
   static maxMineDistance: number = 10;
   static maxWorkersPerGoldmine:number = 10;
   static baseSpacing: number = 2;
-  static watchtowersPerCastle: number = 1;
+  static watchtowersPerCastle: number = 0; // Should be 1.
   static supplyBuffer: number = 6;
 }
 
