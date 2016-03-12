@@ -749,6 +749,14 @@ class CombatCommander extends CommanderBase{
     return nonScoutUnits;
   }
 
+  // Commands the indicated units to all focus on a single enemy.
+  setFocusFireBehaviour(units: ZChipAPI.Unit[], target: ZChipAPI.Unit){
+    for(let i = 0; i < units.length; i++){
+      units[i].attack(target);
+    }
+  }
+
+  // Commands the indicated units to flee if they are under attack.
   setBehaviourCoward(units: ZChipAPI.Unit[]){
     if(this._cache.enemyArmy.length == 0){
       return;
@@ -979,7 +987,7 @@ class Settings{
   static minimumArmySize: number = 3;
   static attackArmySize:number= 10;
   static upgradeRatio:number = 1; // Should be 5.
-  static attackedDamageThreshold: number = 1;
+  static attackedDamageThreshold: number = 10;
   static maxMineDistance: number = 12;
   static maxWorkersPerGoldmine:number = 10;
   static baseSpacing: number = 2;
