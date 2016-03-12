@@ -1,5 +1,5 @@
 /// <reference path="./ZChip-API.ts"/>
-
+/// <reference path="./Common.ts"/>
 // The possible actions that can be taken by the construction commander.
 enum ConstructionCommanderAction{
   Expand,
@@ -304,7 +304,7 @@ class EconomyCommander extends CommanderBase{
     }
 
     if(
-			this._scope.getDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y) > this._maxMineDistance
+			this._scope.getGroundDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y) > this._maxMineDistance
 			&& closestMine.gold > castleCost
 		){
 			console.log("Reactive expansion");
@@ -323,7 +323,7 @@ class EconomyCommander extends CommanderBase{
       }
 
       if(
-        this._scope.getDistance(nextMine.x, nextMine.y, currentBase.x, currentBase.y)> this._maxMineDistance
+        this._scope.getGroundDistance(nextMine.x, nextMine.y, currentBase.x, currentBase.y)> this._maxMineDistance
         && nextMine.gold > castleCost
       ){
         console.log("Premptive expansion");
@@ -454,7 +454,7 @@ class ConstructionCommander extends CommanderBase{
       return false;
     }
 
-    var buildPosition: ZChipAPI.Point = Util.spiralSearch(
+    var buildPosition: ZChipAPI.Point = Common.Util.spiralSearch(
       baseBuilding.x,
       baseBuilding.y,
       (function(self:ConstructionCommander, buildingPlacementType: ZChipAPI.BuildingType):(x:number, y:number) => boolean {
@@ -896,15 +896,15 @@ class CombatCommander extends CommanderBase{
 
   // Issues individual micro commands.
   private issueMicroOrders(): void{
-    /*var combatArchers = this.excludeScoutFromUnits(this._cache.archers);
+    //var combatArchers = this.excludeScoutFromUnits(this._cache.archers);
 
-    var archerCenter = this._scope.getCenterOfUnits(combatArchers);
-    var enemies = this._cache.enemyArmy;
-    var mostCentralEnemy = this._scope.getClosest(archerCenter.x, archerCenter.y, enemies);
+    //var archerCenter = this._scope.getCenterOfUnits(combatArchers);
+    //var enemies = this._cache.enemyArmy;
+    //var mostCentralEnemy = this._scope.getClosest(archerCenter.x, archerCenter.y, enemies);
 
-    this.setFocusFireBehaviour(combatArchers, mostCentralEnemy);
-    this.setBehaviourVulture(combatArchers);
-    this.setBehaviourCoward(combatArchers);*/
+    //this.setFocusFireBehaviour(combatArchers, mostCentralEnemy);
+    //this.setBehaviourVulture(combatArchers);
+    //this.setBehaviourCoward(combatArchers);
   }
 
   // Issues all combat orders to units.
@@ -999,37 +999,4 @@ class Settings{
   static baseSpacing: number = 2;
   static watchtowersPerCastle: number = 0; // Should be 1.
   static supplyBuffer: number = 6;
-}
-
-
-// Contains static utility methods.
-class Util{
-  // Begins at a point and spirals outwards. Returns the first point where validation succeeds.
-  static spiralSearch(startX: number, startY: number, validator: (x:number, y:number)=>boolean, searchDiameter: number):ZChipAPI.Point{
-    var x = 0,
-      y = 0,
-      delta = [0, -1],
-      width = searchDiameter,
-      height = searchDiameter;
-
-    for (let i = Math.pow(Math.max(width, height), 2); i>0; i--) {
-      if ((-width/2 < x && x <= width/2)
-          && (-height/2 < y && y <= height/2)) {
-        if(validator(startX + x,startY + y)){
-          return {x: startX + x, y: startY + y};
-        }
-      }
-
-      if (x === y
-          || (x < 0 && x === -y)
-          || (x > 0 && x === 1-y)){
-        delta = [-delta[1], delta[0]]
-      }
-
-      x = x + delta[0];
-      y = y + delta[1];
-    }
-
-    return null;
-  }
 }

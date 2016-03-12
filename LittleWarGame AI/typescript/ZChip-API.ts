@@ -1,4 +1,5 @@
-///<reference path="LWG-API.ts" />
+///<reference path="./LWG-API.ts" />
+///<reference path="./Common.ts" />
 module ZChipAPI{
 
   class BuildingFactory{
@@ -60,6 +61,9 @@ module ZChipAPI{
 
     // The team number of the neutral team.
     static neutralTeamNumber: number = 0;
+
+    // The diameter around a starting position th get the ground distance from if the start position is not pathable.
+    static pathStartDistance: number = 6;
   }
 
   class HiddenMagicStrings{
@@ -411,6 +415,15 @@ module ZChipAPI{
     // The wrapped little war game object.
     private _innerScope: LWG.IScope;
 
+    // Gets the distance between the two points along the ground.
+    getGroundDistance(x1:number, y1:number, x2: number, y2:number):number{
+      var startPoint = Common.Util.spiralSearch(x1, y1, (x:number, y:number):boolean =>{
+        return this.positionIsPathable(x,y);
+      }, HiddenMagicNumbers.pathStartDistance);
+
+      return this._innerScope.getGroundDistance(startPoint.x, startPoint.y, x2, y2);
+    }
+
     // Returns the current upgrade level of the specified upgrade type.
     getUpgradeLevel(type: UpgradeType):number{
       var upgradeName = TypeMapper.getUpgradeName(type);
@@ -664,6 +677,22 @@ module ZChipAPI{
     // Determines if a position is pathable.
     positionIsPathable(x:number, y:number):boolean{
       return this._innerScope.positionIsPathable(x, y);
+    }
+
+    // Gets the closest unit out of a list of units accounting for pathing.
+    getClosestByGround(x: number, y: number, targetUnits: GameEntity[]): GameEntity{
+      var closest: GameEntity = null;
+      var closestDistance: number = Number.MAX_VALUE;
+      for(let i: number = 0; i < targetUnits.length; i++){
+        var targetUnit: GameEntity = targetUnits[i];
+        var distanceToTarget: number = this.getGroundDistance(x, y, targetUnit.x, targetUnit.y);
+        if(distanceToTarget < closestDistance){
+          closest = targetUnit;
+          closestDistance = distanceToTarget;
+        }
+      }
+
+      return closest;
     }
 
     // Gets the closest unit out of a list of units.
