@@ -663,6 +663,9 @@ class CombatCommander extends CommanderBase{
   // An ordered collection of mine locations to scout.
   scoutOrder: ZChipAPI.Mine[];
 
+  // The current target for the scout.
+  currentScoutTarget: ZChipAPI.Mine;
+
   // The minimum army size the AI should have, under which only defensive behaviour will occur.
   minimumArmySize: number;
 
@@ -682,7 +685,7 @@ class CombatCommander extends CommanderBase{
   attackedDamageThreshold: number;
 
   // A list of goldmines suspected to harbour enemy bases.
-  suspectedBases: ZChipAPI.Unit[];
+  suspectedBases: ZChipAPI.Mine[];
 
   // How close a unit must get to a goldmine to determine if there is an enemy base there.
   checkMineForBaseDistance: number;
@@ -815,7 +818,19 @@ class CombatCommander extends CommanderBase{
 		return hitpoints;
 	}
 
-  // TODO: Clear suspcion from mines.
+  // Determines if any units are close enough to a mine to clear suspicion from it.
+  private clearSuspicionFromScoutedMines(): void{
+    this.suspectedBases = this.suspectedBases.filter((m:ZChipAPI.Mine):boolean =>{
+      for(let j = 0; j < this._cache.units.length; j++){
+        let unit = this._cache.units[j];
+        if(this._scope.getDistance(unit.x, unit.y, m.x, m.y) < this.checkMineForBaseDistance){
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }
 
   // Orders units other than the scout to attack move to the coordinate.
   private attackExcludeScout(x:number, y:number):void{
@@ -837,11 +852,12 @@ class CombatCommander extends CommanderBase{
     }
 
     if(this.scout != null && this.scout.hitpoints < 1){
-      // TODO: Add suspected bases.
+      this._scope.chatMessage("General Z is thinking: Perhaps the enemy was guarding a base.");
+      this.suspectedBases.push(this.currentScoutTarget);
       this.scout = null;
     }
 
-    if(this._cache.army.length > this.minimumArmySize && this.scout == null){
+    if(this._cache.army.length > this.minimumArmySize && this.scout == null && this._cache.enemyArmy.length == 0){
       // TODO: limit or prioritize unit type so expensive units aren't used.
 			this.scout = this._cache.army[0];
 			this.scout.stop();
@@ -851,6 +867,7 @@ class CombatCommander extends CommanderBase{
 		if(this.scout != null){
 			if(this.scout.currentOrder == ZChipAPI.OrderType.Stop){
 				var mine = this.scoutOrder.shift();
+        this.currentScoutTarget = mine;
 				this.scout.moveTo(mine);
 				this._scope.chatMessage("General Z is thinking: Let's take a look over here...");
 			}
@@ -887,7 +904,10 @@ class CombatCommander extends CommanderBase{
       this.attackExcludeScout(targetBuilding.x, targetBuilding.y);
     }
     else if(this.attackMode == true && this.suspectedBases.length > 0){
-      // TODO: Also check out suspected bases.
+      if(this.suspectedBases.length > 0){
+        var targetMine = this.suspectedBases[0];
+        this.attackExcludeScout(targetMine.x, targetMine.y);
+      }
     }
     else{
       this.returnArmyToBase(primaryBase);
@@ -910,6 +930,8 @@ class CombatCommander extends CommanderBase{
   // Issues all combat orders to units.
   executeCombatOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
     console.log("Executing Combat Orders.");
+
+    this.clearSuspicionFromScoutedMines();
 
     this.setAttackMode();
 
