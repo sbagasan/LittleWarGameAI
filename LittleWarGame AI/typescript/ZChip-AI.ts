@@ -941,7 +941,24 @@ class CombatCommander extends CommanderBase{
 
     this.issueMicroOrders();
 
+    this.pullWorkers();
+
     this._oldHitpoints = this.getUnitHitpoints(this._cache.army);
+  }
+
+  private pullWorkers():void {
+    var enemies: ZChipAPI.Unit[] = this._cache.enemyArmy;
+    var workers: ZChipAPI.Worker[] = this._cache.workers;
+    // TODO: Settings stuff should be passed in.
+    if(enemies.length > this._cache.army.length && workers.length /  Settings.workerAttackRatio > enemies.length){
+      for(let i = 0; i < workers.length; i++){
+        var worker: ZChipAPI.Worker = workers[i];
+        var closestEnemy: ZChipAPI.Unit = <ZChipAPI.Unit>this._scope.getClosestByGround(worker.x, worker.y, enemies)
+        if(this._scope.getGroundDistance(worker.x, worker.y, closestEnemy.x, closestEnemy.y) > Settings.workerDefenceDistance){
+          worker.attack(closestEnemy);
+        }
+      }
+    }
   }
 
   constructor(minimumArmySize:number, attackArmySize:number, upgradeRatio: number, attackedDamageThreshold:number){
@@ -1021,4 +1038,6 @@ class Settings{
   static baseSpacing: number = 2;
   static watchtowersPerCastle: number = 0; // Should be 1.
   static supplyBuffer: number = 6;
+  static workerDefenceDistance: number = 5;
+  static workerAttackRatio: number = 2;
 }
