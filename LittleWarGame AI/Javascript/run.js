@@ -1,6 +1,6 @@
 if(this.init == undefined){
   this.init = true;
-  // Paste Typescript Here.
+  // Paste compiled javascript here.
   this.grandCommander = new GrandCommander();
   this.cycle = function(scope){
     var superScope = new ZChipAPI.Scope(scope);
