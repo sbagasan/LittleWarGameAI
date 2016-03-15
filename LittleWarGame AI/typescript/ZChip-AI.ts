@@ -533,7 +533,7 @@ class ConstructionCommander extends CommanderBase{
           }
           break;
         case ConstructionCommanderAction.BuildHouse:
-          if(!buildingInProgress){
+          if(!buildingInProgress && currentBase != null){
             let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.House, null);
 
             if(buildingStarted){
@@ -552,7 +552,7 @@ class ConstructionCommander extends CommanderBase{
           }
           break;
         case ConstructionCommanderAction.BuildWatchtower:
-          if(!buildingInProgress){
+          if(!buildingInProgress && currentBase != null){
             let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Watchtower, null);
 
             if(buildingStarted){
@@ -562,7 +562,7 @@ class ConstructionCommander extends CommanderBase{
           }
           break;
         case ConstructionCommanderAction.BuildForge:
-          if(!buildingInProgress){
+          if(!buildingInProgress && currentBase != null){
             let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Forge, null);
 
             if(buildingStarted){
@@ -572,7 +572,7 @@ class ConstructionCommander extends CommanderBase{
           }
           break;
         case ConstructionCommanderAction.BuildBarracks:
-          if(!buildingInProgress){
+          if(!buildingInProgress && currentBase != null){
             let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Barracks, null);
 
             if(buildingStarted){
@@ -899,7 +899,7 @@ class CombatCommander extends CommanderBase{
     else if(expansionTarget != null){
       this.attackExcludeScout(expansionTarget.x, expansionTarget.y);
     }
-    else if(this.attackMode == false){
+    else if(this.attackMode == false  && primaryBase != null){
       this.returnArmyToBase(primaryBase);
     }
     else if(this.attackMode == true && this._cache.enemyBuildings.length > 0){
@@ -913,8 +913,12 @@ class CombatCommander extends CommanderBase{
         this.attackExcludeScout(targetMine.x, targetMine.y);
       }
     }
-    else{
+    else if(primaryBase != null){
       this.returnArmyToBase(primaryBase);
+    }
+    else{
+      let unitCenter = this._scope.getCenterOfUnits(this._cache.units);
+      this.attackExcludeScout(unitCenter.x, unitCenter.y);
     }
   }
 
@@ -1009,11 +1013,16 @@ class GrandCommander extends CommanderBase{
 
   // Selects the current primary base.
   selectPrimaryBase(): ZChipAPI.Building{
-    var prioritizedCastles = this._cache.castles.sort((a, b) =>{
-      return b.creationCycle - a.creationCycle;
-    });
+    if(this._cache.castles.length > 0){
+      let prioritizedCastles = this._cache.castles.sort((a, b) =>{
+        return b.creationCycle - a.creationCycle;
+      });
 
-    return prioritizedCastles[0];
+      return prioritizedCastles[0];
+    }
+    else{
+      return null;
+    }
   }
 
   setScope(scope: ZChipAPI.Scope, cache:Cache){
