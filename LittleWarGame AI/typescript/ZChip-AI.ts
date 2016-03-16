@@ -303,6 +303,9 @@ class EconomyCommander extends CommanderBase{
       return null;
     }
 
+    console.log(this._scope.getGroundDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y));
+    console.log(this._maxMineDistance);
+
     if(
 			this._scope.getGroundDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y) > this._maxMineDistance
 			&& closestMine.gold > castleCost
@@ -607,7 +610,7 @@ class ConstructionCommander extends CommanderBase{
     console.log("Prioritizing Build Order.");
     var priorityQueue: ConstructionCommanderAction[] = [];
 
-    if(expansionTarget != null){
+    if(expansionTarget != null && this._cache.workers.length > 0){
       priorityQueue.push(ConstructionCommanderAction.Expand);
       return priorityQueue;
     }
