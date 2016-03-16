@@ -828,6 +828,7 @@ class CombatCommander extends CommanderBase{
       for(let j = 0; j < this._cache.units.length; j++){
         let unit = this._cache.units[j];
         if(this._scope.getDistance(unit.x, unit.y, m.x, m.y) < this.checkMineForBaseDistance){
+          this._scope.chatMessage("General Z is thinking: Ain't nobody here but us chickens.");
           return false;
         }
       }
@@ -855,13 +856,17 @@ class CombatCommander extends CommanderBase{
       this.scoutOrder = this.getScoutMinePriority();
     }
 
-    if(this.scout != null && this.scout.hitpoints < 1){
+    if(this.scout != null && this.scout.hitpoints <= 0){
       this._scope.chatMessage("General Z is thinking: Perhaps the enemy was guarding a base.");
       this.suspectedBases.push(this.currentScoutTarget);
       this.scout = null;
     }
 
-    if(this._cache.army.length > this.minimumArmySize && this.scout == null && this._cache.enemyArmy.length == 0){
+    if(
+      this._cache.army.length > this.minimumArmySize
+      && this.scout == null
+      && this._cache.enemyArmy.length == 0
+      && this.suspectedBases.length + this._cache.enemyBuildings.length < 1){
       // TODO: limit or prioritize unit type so expensive units aren't used.
 			this.scout = this._cache.army[0];
 			this.scout.stop();
