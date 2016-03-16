@@ -894,14 +894,9 @@ module ZChipAPI{
       return TypeMapper.getBuildingType(this._innerUnit.getTypeName());
     }
 
-    // Returns true if the building is finished, otherwise returns false.
-    get isFinished(): boolean{
-      var timeRemaining = this._innerUnit.getRemainingBuildTime();
-      if(timeRemaining != undefined && timeRemaining != null && timeRemaining > 0){
-        return false;
-      }
-
-      return true;
+    // Returns false if the building is finished, otherwise returns true.
+    get isUnderConstruction(): boolean{
+      return this._innerUnit.isUnderConstruction();
     }
 
     // Gets the size of the building.

@@ -379,9 +379,10 @@ class ConstructionCommander extends CommanderBase{
     if(this._cache.buildings.length - this._cache.completeBuildings.length > repairingWorkers.length){
 			for(let i: number = 0; i < this._cache.buildings.length; i++){
 				let building: ZChipAPI.Building = this._cache.buildings[i];
-				if(!building.isFinished){
+				if(building.isUnderConstruction){
 					let worker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosestByGround(building.x, building.y, availibleWorkers);
 					if(worker != null){
+            this._scope.chatMessage("General Z is thinking: Don't start something you can't finish.");
 						worker.repair(building);
 					}
 				}
