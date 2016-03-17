@@ -63,7 +63,7 @@ module ZChipAPI{
     static neutralTeamNumber: number = 0;
 
     // The diameter around a starting position th get the ground distance from if the start position is not pathable.
-    static pathStartDistance: number = 6;
+    static pathStartDistance: number = 8;
   }
 
   class HiddenMagicStrings{

@@ -372,6 +372,9 @@ class ConstructionCommander extends CommanderBase{
   // The number of free supply left before a farm will be constructed.
   private _supplyBuffer: number;
 
+  // The maximum distance from a mine to build a castle.
+  private _maxMineDistance: number;
+
   // Repair dammaged buildings or finishes buildings that were left incomplete.
   rebuildAndRepair(){
     var repairingWorkers: ZChipAPI.Worker[] = < ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, player:this._scope.playerNumber, order: ZChipAPI.OrderType.Repair});
@@ -438,6 +441,11 @@ class ConstructionCommander extends CommanderBase{
   // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
   buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType, maxDistance: number):boolean{
     console.log("Building Type " + type);
+
+    if(maxDistance == null){
+        maxDistance = this._maxBaseSize;
+    }
+
     var cost = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Cost);
     if(cost > this._scope.currentGold){
       return false;
@@ -461,16 +469,14 @@ class ConstructionCommander extends CommanderBase{
     var buildPosition: ZChipAPI.Point = Common.Util.spiralSearch(
       baseBuilding.x,
       baseBuilding.y,
-      (function(self:ConstructionCommander, buildingPlacementType: ZChipAPI.BuildingType):(x:number, y:number) => boolean {
+      (function(self:ConstructionCommander, buildingPlacementType: ZChipAPI.BuildingType, base: ZChipAPI.Building):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
-          return self.canPlaceBuilding(buildingPlacementType, x, y, self._baseSpacing);
+          let canPlace = self.canPlaceBuilding(buildingPlacementType, x, y, self._baseSpacing);
+          let tooFar = self._scope.getGroundDistance(x, y, base.x, base.y) > maxDistance;
+          return canPlace && ! tooFar;
         }
-      })(this, type),
+      })(this, type, baseBuilding),
       this._maxBaseSize);
-
-    if(maxDistance != null && this._scope.getDistance(buildPosition.x, buildPosition.y, baseBuilding.x, baseBuilding.y) > maxDistance){
-      buildPosition = null;
-    }
 
     if(buildPosition == null){
       this._scope.chatMessage("General Z is thinking: My base is too small.");
@@ -528,7 +534,7 @@ class ConstructionCommander extends CommanderBase{
       switch(workOrder){
         case ConstructionCommanderAction.Expand:
           if(!buildingInProgress && expansionTarget != null){
-            let buildingStarted = this.buildBuildingNearBuilding(expansionTarget, ZChipAPI.BuildingType.Castle, null);
+            let buildingStarted = this.buildBuildingNearBuilding(expansionTarget, ZChipAPI.BuildingType.Castle, this._maxMineDistance);
 
             if(buildingStarted){
               buildingInProgress = true;
@@ -654,11 +660,12 @@ class ConstructionCommander extends CommanderBase{
     return priorityQueue;
   }
 
-  constructor(baseSpacing: number, watchtowersPerCastle: number, supplyBuffer: number){
+  constructor(baseSpacing: number, watchtowersPerCastle: number, supplyBuffer: number, maxMineDistance: number){
     super();
     this._baseSpacing = baseSpacing;
     this._watchtowersPerCastle = watchtowersPerCastle;
     this._supplyBuffer = supplyBuffer;
+    this._maxMineDistance = maxMineDistance;
 
     this._maxBaseSize = 30;
   }
@@ -1045,7 +1052,7 @@ class GrandCommander extends CommanderBase{
     super();
     this.combatCommander = new CombatCommander(Settings.minimumArmySize, Settings.attackArmySize, Settings.upgradeRatio, Settings.attackedDamageThreshold);
     this.economyCommander = new EconomyCommander(Settings.maxMineDistance, Settings.maxWorkersPerGoldmine);
-    this.constructionCommander =  new  ConstructionCommander(Settings.baseSpacing, Settings.watchtowersPerCastle, Settings.supplyBuffer);
+    this.constructionCommander =  new  ConstructionCommander(Settings.baseSpacing, Settings.watchtowersPerCastle, Settings.supplyBuffer, Settings.maxMineDistance);
   }
 }
 
