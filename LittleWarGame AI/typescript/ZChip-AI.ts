@@ -291,6 +291,8 @@ class EconomyCommander extends CommanderBase{
   // Chooses a mine to expand to, or returns null if no expansion is warranted.
   considerExpansion(currentBase: ZChipAPI.Building): ZChipAPI.Mine{
     console.log("Considering Expansion");
+    var distanceToMine: number;
+
     if(currentBase == null){
       // TODO: Choose a better action if we have no base.
       return null;
@@ -306,8 +308,11 @@ class EconomyCommander extends CommanderBase{
     console.log(this._scope.getGroundDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y));
     console.log(this._maxMineDistance);
 
+    // TODO: If we can't reach the mine, choose a different one.
+    distanceToMine = this._scope.getGroundDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y);
     if(
-			this._scope.getGroundDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y) > this._maxMineDistance
+      distanceToMine != null
+			&& distanceToMine > this._maxMineDistance
 			&& closestMine.gold > castleCost
 		){
 			console.log("Reactive expansion");
@@ -325,8 +330,11 @@ class EconomyCommander extends CommanderBase{
         return null;
       }
 
+      // TODO: If we can't reach the mine, choose a different one.
+      distanceToMine = this._scope.getGroundDistance(nextMine.x, nextMine.y, currentBase.x, currentBase.y);
       if(
-        this._scope.getGroundDistance(nextMine.x, nextMine.y, currentBase.x, currentBase.y)> this._maxMineDistance
+        distanceToMine != null
+        && distanceToMine> this._maxMineDistance
         && nextMine.gold > castleCost
       ){
         console.log("Premptive expansion");
@@ -422,6 +430,7 @@ class ConstructionCommander extends CommanderBase{
 
         var positionPathable:boolean = this._scope.positionIsPathable(i, j);
         var positionOnRamp:boolean = this._scope.positionIsOnRamp(i, j);
+        var positionIsBlocked: boolean = this._scope.positionIsBlocked(i, j);
         var positionIsNearMine:boolean = false;
 
         // We don't care if we're near a mine unless it is a castle.
@@ -429,7 +438,7 @@ class ConstructionCommander extends CommanderBase{
           positionIsNearMine= this._scope.positionIsNearMine(i, j);
         }
 
-        if(!positionPathable || positionOnRamp || positionIsNearMine){
+        if(!positionPathable || positionOnRamp || positionIsBlocked || positionIsNearMine){
           return false;
         }
       }
@@ -472,7 +481,8 @@ class ConstructionCommander extends CommanderBase{
       (function(self:ConstructionCommander, buildingPlacementType: ZChipAPI.BuildingType, base: ZChipAPI.Building):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
           let canPlace = self.canPlaceBuilding(buildingPlacementType, x, y, self._baseSpacing);
-          let tooFar = self._scope.getGroundDistance(x, y, base.x, base.y) > maxDistance;
+          let distanceToPosition = self._scope.getGroundDistance(x, y, base.x, base.y);
+          let tooFar = distanceToPosition == null || distanceToPosition > maxDistance;
           return canPlace && ! tooFar;
         }
       })(this, type, baseBuilding),
@@ -481,7 +491,7 @@ class ConstructionCommander extends CommanderBase{
     if(buildPosition == null){
       this._scope.chatMessage("General Z is thinking: My base is too small.");
       this._baseSpacing = 1;
-      this._maxBaseSize += 5;
+      this._maxBaseSize += 10;
       return false;
     }
 
@@ -978,7 +988,8 @@ class CombatCommander extends CommanderBase{
       for(let i = 0; i < workers.length; i++){
         var worker: ZChipAPI.Worker = workers[i];
         var closestEnemy: ZChipAPI.Unit = <ZChipAPI.Unit>this._scope.getClosestByGround(worker.x, worker.y, enemies)
-        if(this._scope.getGroundDistance(worker.x, worker.y, closestEnemy.x, closestEnemy.y) > Settings.workerDefenceDistance){
+        var distanceToTarget: number = this._scope.getGroundDistance(worker.x, worker.y, closestEnemy.x, closestEnemy.y)
+        if(distanceToTarget != null && distanceToTarget > Settings.workerDefenceDistance){
           worker.attack(closestEnemy);
         }
       }
