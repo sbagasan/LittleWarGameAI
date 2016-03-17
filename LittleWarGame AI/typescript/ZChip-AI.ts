@@ -523,7 +523,7 @@ class ConstructionCommander extends CommanderBase{
         return function(x:number, y:number):boolean{
           let canPlace = self.canPlaceBuilding(buildingPlacementType, x, y, self._baseSpacing);
           let distanceToPosition = self._scope.getGroundDistance(x, y, base.x, base.y);
-          let tooFar = distanceToPosition == null || distanceToPosition > this._maxBaseSize;
+          let tooFar = distanceToPosition == null || distanceToPosition > self._maxBaseSize;
           return canPlace && ! tooFar;
         }
       })(this, type, baseBuilding),
