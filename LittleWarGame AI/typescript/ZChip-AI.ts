@@ -448,12 +448,53 @@ class ConstructionCommander extends CommanderBase{
   }
 
   // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
-  buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType, maxDistance: number):boolean{
-    console.log("Building Type " + type);
+  buildCastleNearGoldmine(goldmine: ZChipAPI.Building, maxDistance: number):boolean{
+    console.log("Building Castle ");
 
-    if(maxDistance == null){
-        maxDistance = this._maxBaseSize;
+    var cost = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
+    if(cost > this._scope.currentGold){
+      return false;
     }
+
+    // Not using cache, because worker orders may have changed.
+    var nonBuildingWorkers: ZChipAPI.Worker[] = [];
+    for(var i = 0; i < this._cache.workers.length; i++){
+      var worker = this._cache.workers[i];
+      if(worker.currentOrder == ZChipAPI.OrderType.Mine || worker.currentOrder == ZChipAPI.OrderType.Stop){
+        nonBuildingWorkers.push(worker);
+      }
+    }
+
+    var closestWorker: ZChipAPI.Worker = <ZChipAPI.Worker>this._scope.getClosestByGround(goldmine.x, goldmine.y, nonBuildingWorkers);
+
+    if(closestWorker == null){
+      return false;
+    }
+
+    var buildPosition: ZChipAPI.Point = Common.Util.spiralSearch(
+      goldmine.x,
+      goldmine.y,
+      (function(self:ConstructionCommander, base: ZChipAPI.Building):(x:number, y:number) => boolean {
+        return function(x:number, y:number):boolean{
+          let canPlace = self.canPlaceBuilding(ZChipAPI.BuildingType.Castle, x, y, self._baseSpacing);
+          let distanceToPosition = self._scope.getGroundDistance(x, y, base.x, base.y);
+          let tooFar = distanceToPosition == null || distanceToPosition > maxDistance;
+          return canPlace && ! tooFar;
+        }
+      })(this, goldmine),
+      this._maxBaseSize);
+
+    if(buildPosition == null){
+      return false;
+    }
+
+    closestWorker.build(ZChipAPI.BuildingType.Castle, buildPosition.x, buildPosition.y);
+    return true;
+  }
+
+  // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
+  buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType):boolean{
+    console.log("Building Type " + type);
 
     var cost = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Cost);
     if(cost > this._scope.currentGold){
@@ -482,7 +523,7 @@ class ConstructionCommander extends CommanderBase{
         return function(x:number, y:number):boolean{
           let canPlace = self.canPlaceBuilding(buildingPlacementType, x, y, self._baseSpacing);
           let distanceToPosition = self._scope.getGroundDistance(x, y, base.x, base.y);
-          let tooFar = distanceToPosition == null || distanceToPosition > maxDistance;
+          let tooFar = distanceToPosition == null || distanceToPosition > this._maxBaseSize;
           return canPlace && ! tooFar;
         }
       })(this, type, baseBuilding),
@@ -544,7 +585,7 @@ class ConstructionCommander extends CommanderBase{
       switch(workOrder){
         case ConstructionCommanderAction.Expand:
           if(!buildingInProgress && expansionTarget != null){
-            let buildingStarted = this.buildBuildingNearBuilding(expansionTarget, ZChipAPI.BuildingType.Castle, this._maxMineDistance);
+            let buildingStarted = this.buildCastleNearGoldmine(expansionTarget, this._maxMineDistance);
 
             if(buildingStarted){
               buildingInProgress = true;
@@ -554,7 +595,7 @@ class ConstructionCommander extends CommanderBase{
           break;
         case ConstructionCommanderAction.BuildHouse:
           if(!buildingInProgress && currentBase != null){
-            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.House, null);
+            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.House);
 
             if(buildingStarted){
               buildingInProgress = true;
@@ -573,7 +614,7 @@ class ConstructionCommander extends CommanderBase{
           break;
         case ConstructionCommanderAction.BuildWatchtower:
           if(!buildingInProgress && currentBase != null){
-            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Watchtower, null);
+            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Watchtower);
 
             if(buildingStarted){
               buildingInProgress = true;
@@ -583,7 +624,7 @@ class ConstructionCommander extends CommanderBase{
           break;
         case ConstructionCommanderAction.BuildForge:
           if(!buildingInProgress && currentBase != null){
-            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Forge, null);
+            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Forge);
 
             if(buildingStarted){
               buildingInProgress = true;
@@ -593,7 +634,7 @@ class ConstructionCommander extends CommanderBase{
           break;
         case ConstructionCommanderAction.BuildBarracks:
           if(!buildingInProgress && currentBase != null){
-            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Barracks, null);
+            let buildingStarted = this.buildBuildingNearBuilding(currentBase, ZChipAPI.BuildingType.Barracks);
 
             if(buildingStarted){
               buildingInProgress = true;
