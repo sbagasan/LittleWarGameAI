@@ -1061,7 +1061,7 @@ class CombatCommander extends CommanderBase{
     }
   }
 
-  constructor(minimumArmySize:number, attackArmySize:number, upgradeRatio: number, attackedDamageThreshold:number){
+  constructor(minimumArmySize:number, attackArmySize:number, upgradeRatio: number, attackedDamageThreshold:number, checkMineForBaseDistance:number){
     super();
     this.minimumArmySize = minimumArmySize;
     this.attackArmySize = attackArmySize;
@@ -1072,7 +1072,7 @@ class CombatCommander extends CommanderBase{
     this.scoutOrder = null;
     this.attackMode = false;
     this.suspectedBases = [];
-    this.checkMineForBaseDistance = 2;
+    this.checkMineForBaseDistance = checkMineForBaseDistance;
   }
 }
 
@@ -1126,7 +1126,7 @@ class GrandCommander extends CommanderBase{
 
   constructor(){
     super();
-    this.combatCommander = new CombatCommander(Settings.minimumArmySize, Settings.attackArmySize, Settings.upgradeRatio, Settings.attackedDamageThreshold);
+    this.combatCommander = new CombatCommander(Settings.minimumArmySize, Settings.attackArmySize, Settings.upgradeRatio, Settings.attackedDamageThreshold, Settings.checkMineForBaseDistance);
     this.economyCommander = new EconomyCommander(Settings.maxMineDistance, Settings.maxWorkersPerGoldmine);
     this.constructionCommander =  new  ConstructionCommander(Settings.baseSpacing, Settings.watchtowersPerCastle, Settings.supplyBuffer, Settings.maxMineDistance);
   }
@@ -1145,4 +1145,5 @@ class Settings{
   static supplyBuffer: number = 6;
   static workerDefenceDistance: number = 5;
   static workerAttackRatio: number = 2;
+  static checkMineForBaseDistance: number = 4;
 }
