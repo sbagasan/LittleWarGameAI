@@ -288,10 +288,24 @@ class EconomyCommander extends CommanderBase{
     return this._maxWorkersPerGoldmine;
   }
 
+  // Orders the mines by their proximity (by ground) to the designated building.
+  private orderMinesByProximityToBuilding(castle:ZChipAPI.Building, mines:ZChipAPI.Mine[]): ZChipAPI.Mine[]{
+    var mineDistances: number[] = [];
+    for(let i = 0; i < mines.length; i++){
+      let mine = mines[i];
+      mineDistances[mine.id] = this._scope.getGroundDistance(mine.x, mine.y, castle.x, castle.y);
+    }
+
+    return mines.sort((a: ZChipAPI.Mine, b: ZChipAPI.Mine) =>{
+      return mineDistances[a.id] - mineDistances[b.id];
+    });
+  }
+
   // Chooses a mine to expand to, or returns null if no expansion is warranted.
   considerExpansion(currentBase: ZChipAPI.Building): ZChipAPI.Mine{
     console.log("Considering Expansion");
     var distanceToMine: number;
+    var orderedMines: ZChipAPI.Mine[] = this.orderMinesByProximityToBuilding(currentBase, this._cache.undepletedMines);
 
     if(currentBase == null){
       // TODO: Choose a better action if we have no base.
@@ -299,7 +313,12 @@ class EconomyCommander extends CommanderBase{
     }
 
     var castleCost: number = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
-    var closestMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosestByGround(currentBase.x, currentBase.y, this._cache.undepletedMines);
+    var closestMine: ZChipAPI.Mine = null;
+
+    if(orderedMines.length > 0){
+      closestMine = orderedMines[0];
+    }
+
     if(closestMine == null){
       // Give up. There is no more gold to be had.
       return null;
@@ -324,7 +343,12 @@ class EconomyCommander extends CommanderBase{
 				return m !== closestMine;
 			});
 
-      var nextMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosestByGround(currentBase.x, currentBase.y, expansionCandidates);
+      var nextMine: ZChipAPI.Mine = null;
+
+      if(orderedMines.length > 1){
+        nextMine = orderedMines[1];
+      }
+
       if(nextMine == null){
         // Give up. There is no more gold to be had.
         return null;
@@ -352,7 +376,7 @@ class EconomyCommander extends CommanderBase{
     // Not using cache, because worker orders may have changed.
     var workers = <ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Stop, player: this._scope.playerNumber});
     console.log(workers);
-    for (var i = 0; i < workers.length; i++){
+    for (let i = 0; i < workers.length; i++){
       var worker = workers[i];
       var closestBase = this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);
       console.log(closestBase);
