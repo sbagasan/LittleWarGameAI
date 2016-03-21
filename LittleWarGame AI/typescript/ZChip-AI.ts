@@ -305,13 +305,13 @@ class EconomyCommander extends CommanderBase{
   considerExpansion(currentBase: ZChipAPI.Building): ZChipAPI.Mine{
     console.log("Considering Expansion");
     var distanceToMine: number;
-    var orderedMines: ZChipAPI.Mine[] = this.orderMinesByProximityToBuilding(currentBase, this._cache.undepletedMines);
 
     if(currentBase == null){
       // TODO: Choose a better action if we have no base.
       return null;
     }
 
+    var orderedMines: ZChipAPI.Mine[] = this.orderMinesByProximityToBuilding(currentBase, this._cache.undepletedMines);
     var castleCost: number = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
     var closestMine: ZChipAPI.Mine = null;
 
