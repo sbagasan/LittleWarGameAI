@@ -694,10 +694,15 @@ module ZChipAPI{
       var closestDistance: number = Number.MAX_VALUE;
       for(let i: number = 0; i < targetUnits.length; i++){
         var targetUnit: GameEntity = targetUnits[i];
-        var distanceToTarget: number = this.getGroundDistance(x, y, targetUnit.x, targetUnit.y);
-        if(distanceToTarget != null && distanceToTarget < closestDistance){
-          closest = targetUnit;
-          closestDistance = distanceToTarget;
+
+        // The unit cannot be closer than the current closest if the distance as the crow flies is greater than the ground distance of the current closest.
+        var shortDistanceToTarget:number = this.getDistance(x, y, targetUnit.x, targetUnit.y);
+        if(shortDistanceToTarget < closestDistance){
+          var distanceToTarget: number = this.getGroundDistance(x, y, targetUnit.x, targetUnit.y);
+          if(distanceToTarget != null && distanceToTarget < closestDistance){
+            closest = targetUnit;
+            closestDistance = distanceToTarget;
+          }
         }
       }
 
