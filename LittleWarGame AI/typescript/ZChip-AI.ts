@@ -280,6 +280,7 @@ class EconomyCommander extends CommanderBase{
 
     this._maxMineDistance = maxMineDistance;
     this._maxWorkersPerGoldmine = maxWorkersPerGoldmine;
+    this._cachedMineDistances = [];
   }
 
   // Gets the desired number of workers.
@@ -288,12 +289,32 @@ class EconomyCommander extends CommanderBase{
     return this._maxWorkersPerGoldmine;
   }
 
+  private _cachedMineDistances: ZChipAPI.Mine[][];
+
+  // Gets the mines ordered by proximity to the specified building.
+  private getMinesOrderedByProximity(building: ZChipAPI.Building, undepleted:boolean): ZChipAPI.Mine[]{
+    if(this._cachedMineDistances[building.id] == null){
+      this._cachedMineDistances[building.id] = this.orderMinesByProximityToBuilding(building, this._cache.mines);
+    }
+
+    let mines = this._cachedMineDistances[building.id];
+
+    if(undepleted){
+      return mines.filter((mine:ZChipAPI.Mine):boolean =>{
+        return mine.gold > 0;
+      });
+    }
+    else{
+      return mines;
+    }
+  }
+
   // Orders the mines by their proximity (by ground) to the designated building.
-  private orderMinesByProximityToBuilding(castle:ZChipAPI.Building, mines:ZChipAPI.Mine[]): ZChipAPI.Mine[]{
+  private orderMinesByProximityToBuilding(targetBuilding:ZChipAPI.Building, mines:ZChipAPI.Mine[]): ZChipAPI.Mine[]{
     var mineDistances: number[] = [];
     for(let i = 0; i < mines.length; i++){
       let mine = mines[i];
-      mineDistances[mine.id] = this._scope.getGroundDistance(mine.x, mine.y, castle.x, castle.y);
+      mineDistances[mine.id] = this._scope.getGroundDistance(mine.x, mine.y, targetBuilding.x, targetBuilding.y);
     }
 
     return mines.sort((a: ZChipAPI.Mine, b: ZChipAPI.Mine) =>{
@@ -311,7 +332,7 @@ class EconomyCommander extends CommanderBase{
       return null;
     }
 
-    var orderedMines: ZChipAPI.Mine[] = this.orderMinesByProximityToBuilding(currentBase, this._cache.undepletedMines);
+    var orderedMines: ZChipAPI.Mine[] = this.getMinesOrderedByProximity(currentBase, true);
     var castleCost: number = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
     var closestMine: ZChipAPI.Mine = null;
 
