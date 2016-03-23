@@ -740,14 +740,7 @@ class ConstructionCommander extends CommanderBase{
       return priorityQueue;
     }
 
-
-    console.log("Should Build House?");
-    console.log("currentSupply:" + this._scope.currentSupply);
-    console.log("supplyBuffer:" + this._supplyBuffer);
-    console.log("MaxAvailible Supply:" + this._scope.maxAvailableSupply);
-    console.log("supply cap:" + this._scope.supplyCap);
-    console.log(this._scope.currentSupply + this._supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply <= this._scope.supplyCap);
-    if(this._scope.currentSupply + this._supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply <= this._scope.supplyCap){
+    if(this._scope.currentSupply + this._supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply < this._scope.supplyCap){
       priorityQueue.push(ConstructionCommanderAction.BuildHouse);
     }
 
