@@ -532,8 +532,8 @@ class ConstructionCommander extends CommanderBase{
     }
 
     var buildPosition: ZChipAPI.Point = Common.Util.spiralSearch(
-      goldmine.x,
-      goldmine.y,
+      Math.floor(goldmine.x + (goldmine.size / 2)),
+      Math.floor(goldmine.y + (goldmine.size / 2)),
       (function(self:ConstructionCommander, base: ZChipAPI.Building):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
           let canPlace = self.canPlaceBuilding(ZChipAPI.BuildingType.Castle, x, y, self._baseSpacing);
@@ -585,8 +585,8 @@ class ConstructionCommander extends CommanderBase{
     }
 
     var buildPosition: ZChipAPI.Point = Common.Util.spiralSearch(
-      baseBuilding.x,
-      baseBuilding.y,
+      Math.floor(baseBuilding.x + (baseBuilding.size / 2)),
+      Math.floor(baseBuilding.y + (baseBuilding.size / 2)),
       (function(self:ConstructionCommander, buildingPlacementType: ZChipAPI.BuildingType, base: ZChipAPI.Building):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
           let canPlace = self.canPlaceBuilding(buildingPlacementType, x, y, self._baseSpacing);

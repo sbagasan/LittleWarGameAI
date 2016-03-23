@@ -415,6 +415,81 @@ module ZChipAPI{
     // The wrapped little war game object.
     private _innerScope: LWG.IScope;
 
+    // Gets a collection of points around the perimiter of a building.
+    private getPerimeterPoints(targetBuilding: Building, mapWidth: number, mapHeight:number): Point[]{
+      var perimiterPoints: Point[] = [];
+      var size: number = targetBuilding.size;
+      var perimiterSize: number = size + 2;
+      var startX:number= targetBuilding.x - 1;
+      var startY:number = targetBuilding.y - 1;
+
+      // Add points along the top.
+      for(let i = 0; i < perimiterSize; i++){
+        let x = startX + i;
+        if(x < 0 || x >= mapWidth){
+          continue;
+        }
+
+        let y = startY;
+        if(y < 0 || y >= mapHeight){
+          continue;
+        }
+
+        perimiterPoints.push(new Point(x, y));
+      }
+
+      // Add points along the bottom.
+      for(let i = 0; i < perimiterSize; i++){
+        let x = startX + i;
+        if(x < 0 || x >= mapWidth){
+          continue;
+        }
+
+        let y = startY + perimiterSize;
+
+        if(y < 0 || y >= mapHeight){
+          continue;
+        }
+
+        perimiterPoints.push(new Point(x, y));
+      }
+
+      startY = targetBuilding.x;
+
+      // Add points along the left.
+      for(let i = 0; i < size; i++){
+        let y = startY + i;
+        if(y < 0 || y >= mapHeight){
+          continue;
+        }
+
+        let x = startX;
+        if(x < 0 || x >= mapWidth){
+          continue;
+        }
+
+        perimiterPoints.push(new Point(x, y));
+      }
+
+      // Add points along the right.
+      for(let i = 0; i < size; i++){
+        let y = startY + i;
+        if(y < 0 || y >= mapHeight){
+          continue;
+        }
+
+        let x = startX + perimiterSize;
+
+        if(x < 0 || x >= mapWidth){
+          continue;
+        }
+
+        perimiterPoints.push(new Point(x, y));
+      }
+
+      return perimiterPoints;
+    }
+
     // Gets the distance between the two points along the ground. If no path can be found, null is returned.
     getGroundDistance(x1:number, y1:number, x2: number, y2:number):number{
       var startPoint = Common.Util.spiralSearch(x1, y1, (x:number, y:number):boolean =>{
