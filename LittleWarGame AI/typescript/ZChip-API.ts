@@ -674,7 +674,13 @@ module ZChipAPI{
 
     // Determines if a position is blocked by units.
     positionIsBlocked(x:number, y:number): boolean{
-      // TODO: We need to calculate this somehow.
+      for(let i = 0; i < this.blockedPoints.length; i++){
+        let blockedPoint = this.blockedPoints[i];
+        if(blockedPoint.x == x && blockedPoint.y == y){
+          return true;
+        }
+      }
+
       return false;
     }
 
@@ -760,8 +766,41 @@ module ZChipAPI{
       this.determineAlliances();
     }
 
+    // A per-cycle cache of points blocked by units.
+    private _blockedPoints: Point[];
+
+    get blockedPoints(): Point[]{
+      if(this._blockedPoints == null){
+        this._blockedPoints = this.calculateBlockedPoints();
+      }
+
+      return this._blockedPoints;
+    }
+
+    // Calculates what map squares are blocked by units.
+    private calculateBlockedPoints(): Point[]{
+      var units: Unit[] = this.getUnits({});
+      var blockedPoints: Point[] = [];
+      for(let i = 0; i < units.length; i++){
+        let unit = units[i];
+        let minX = Math.floor(unit.x - (unit.size/ 2));
+        let minY = Math.floor(unit.y - (unit.size/ 2));
+        let maxX = Math.floor(unit.x + (unit.size/ 2));
+        let maxY = Math.floor(unit.y + (unit.size/ 2));
+
+        for(let j = minX; j <= maxX; j++){
+          for(let k = minY; k <= maxY; k++){
+            blockedPoints.push(new Point(j, k));
+          }
+        }
+      }
+
+      return blockedPoints;
+    }
+
     reset(sourceScope: LWG.IScope): void{
       this._innerScope = sourceScope;
+      this._blockedPoints = null;
     }
   }
 

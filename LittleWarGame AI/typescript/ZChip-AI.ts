@@ -324,7 +324,7 @@ class EconomyCommander extends CommanderBase{
 
   // Chooses a mine to expand to, or returns null if no expansion is warranted.
   considerExpansion(currentBase: ZChipAPI.Building): ZChipAPI.Mine{
-    console.log("Considering Expansion");
+    console.log("considerExpansion");
     var distanceToMine: number;
 
     if(currentBase == null){
@@ -345,6 +345,9 @@ class EconomyCommander extends CommanderBase{
       return null;
     }
 
+    console.log(orderedMines);
+    console.log(closestMine);
+    console.log(currentBase);
     console.log(this._scope.getGroundDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y));
     console.log(this._maxMineDistance);
 
@@ -392,7 +395,7 @@ class EconomyCommander extends CommanderBase{
 
   // Assigns idle workers to mine.
   assignIdleWorkers(){
-    console.log("Assigning Idle Workers.");
+    console.log("assignIdleWorkers");
 
     // Not using cache, because worker orders may have changed.
     var workers = <ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Stop, player: this._scope.playerNumber});
@@ -474,16 +477,28 @@ class ConstructionCommander extends CommanderBase{
         }
 
         var positionPathable:boolean = this._scope.positionIsPathable(i, j);
+        if(! positionPathable){
+          return false;
+        }
+
         var positionOnRamp:boolean = this._scope.positionIsOnRamp(i, j);
+        if(positionOnRamp){
+          return false;
+        }
+
         var positionIsBlocked: boolean = this._scope.positionIsBlocked(i, j);
-        var positionIsNearMine:boolean = false;
+        if(positionIsBlocked){
+          return false;
+        }
+
+        var positionTooNearMine:boolean = false;
 
         // We don't care if we're near a mine unless it is a castle.
         if(type == ZChipAPI.BuildingType.Castle){
-          positionIsNearMine= this._scope.positionIsNearMine(i, j);
+          positionTooNearMine= this._scope.positionIsNearMine(i, j);
         }
 
-        if(!positionPathable || positionOnRamp || positionIsBlocked || positionIsNearMine){
+        if(positionTooNearMine){
           return false;
         }
       }
@@ -522,9 +537,17 @@ class ConstructionCommander extends CommanderBase{
       (function(self:ConstructionCommander, base: ZChipAPI.Building):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
           let canPlace = self.canPlaceBuilding(ZChipAPI.BuildingType.Castle, x, y, self._baseSpacing);
+          if(!canPlace){
+            return false;
+          }
+
           let distanceToPosition = self._scope.getGroundDistance(x, y, base.x, base.y);
           let tooFar = distanceToPosition == null || distanceToPosition > maxDistance;
-          return canPlace && ! tooFar;
+          if(tooFar){
+            return false;
+          }
+
+          return true;
         }
       })(this, goldmine),
       this._maxBaseSize);
@@ -709,7 +732,7 @@ class ConstructionCommander extends CommanderBase{
   }
 
   establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, upgradeRatio: number):ConstructionCommanderAction[]{
-    console.log("Prioritizing Build Order.");
+    console.log("establishBuildPriority");
     var priorityQueue: ConstructionCommanderAction[] = [];
 
     if(expansionTarget != null && this._cache.workers.length > 0){
@@ -717,6 +740,13 @@ class ConstructionCommander extends CommanderBase{
       return priorityQueue;
     }
 
+
+    console.log("Should Build House?");
+    console.log("currentSupply:" + this._scope.currentSupply);
+    console.log("supplyBuffer:" + this._supplyBuffer);
+    console.log("MaxAvailible Supply:" + this._scope.maxAvailableSupply);
+    console.log("supply cap:" + this._scope.supplyCap);
+    console.log(this._scope.currentSupply + this._supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply <= this._scope.supplyCap);
     if(this._scope.currentSupply + this._supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply <= this._scope.supplyCap){
       priorityQueue.push(ConstructionCommanderAction.BuildHouse);
     }
@@ -806,7 +836,7 @@ class CombatCommander extends CommanderBase{
 
   // Returns a list of mines to scout in priority order.
   getScoutMinePriority(): ZChipAPI.Mine[]{
-    console.log("Prioritizing scouting");
+    console.log("getScoutMinePriority");
     if(this.scoutOrder == null){
       var scoutOrder = [];
       var players = this._scope.players;
@@ -1049,7 +1079,7 @@ class CombatCommander extends CommanderBase{
 
   // Issues all combat orders to units.
   executeCombatOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
-    console.log("Executing Combat Orders.");
+    console.log("executeCombatOrders");
 
     this.clearSuspicionFromScoutedMines();
 
@@ -1109,7 +1139,7 @@ class GrandCommander extends CommanderBase{
 
   executeOrders():void{
     var primaryBase:ZChipAPI.Building = this.selectPrimaryBase();
-    console.log("Executing Orders.");
+    console.log("executeOrders");
 
     // Economic Orders.
     this.economyCommander.assignIdleWorkers();
