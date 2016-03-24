@@ -338,6 +338,10 @@ class EconomyCommander extends CommanderBase{
     for(let i = 0; i < orderedMines.length; i++){
       let candidate: ZChipAPI.Mine = orderedMines[i];
       let distanceToMine : number = this._scope.getDistanceBetweenBuildings(candidate, currentBase);
+      console.log("Expansion Candidate");
+      console.log(candidate);
+      console.log(distanceToMine);
+      console.log(candidate.gold);
       if(distanceToMine == null){
         // Can't find a path, keep looking.
         continue;
@@ -347,7 +351,8 @@ class EconomyCommander extends CommanderBase{
         return null;
       }
       else if(candidate.gold > castleCost){
-        // Only expand to this mine if it is worht the cost.
+        // Only expand to this mine if it is worth the cost.
+        console.log("Candidate Selected");
         return candidate;
       }
 
@@ -364,9 +369,9 @@ class EconomyCommander extends CommanderBase{
     var workers = <ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Stop, player: this._scope.playerNumber});
     for (let i = 0; i < workers.length; i++){
       var worker = workers[i];
-      var closestBase = this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);
+      var closestBase:ZChipAPI.ProductionBuilding = <ZChipAPI.ProductionBuilding>this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);
       if(closestBase != null){
-        var closestMine = <ZChipAPI.Mine>this._scope.getClosestByGround(closestBase.x, closestBase.y, this._cache.undepletedMines);
+        var closestMine = this.getMinesOrderedByProximity(closestBase, true)[0];
         if(closestMine != null){
           worker.mine(closestMine);
         }
