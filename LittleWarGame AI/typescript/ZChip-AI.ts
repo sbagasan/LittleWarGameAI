@@ -327,8 +327,6 @@ class EconomyCommander extends CommanderBase{
 
   // Chooses a mine to expand to, or returns null if no expansion is warranted.
   considerExpansion(currentBase: ZChipAPI.Building): ZChipAPI.Mine{
-    var distanceToMine: number;
-
     if(currentBase == null){
       // TODO: Choose a better action if we have no base.
       return null;
@@ -336,54 +334,27 @@ class EconomyCommander extends CommanderBase{
 
     var orderedMines: ZChipAPI.Mine[] = this.getMinesOrderedByProximity(currentBase, true);
     var castleCost: number = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
-    var closestMine: ZChipAPI.Mine = null;
 
-    if(orderedMines.length > 0){
-      closestMine = orderedMines[0];
-    }
-
-    if(closestMine == null){
-      // Give up. There is no more gold to be had.
-      return null;
-    }
-
-    // TODO: If we can't reach the mine, choose a different one.
-    distanceToMine = this._scope.getDistanceBetweenBuildings(closestMine, currentBase);
-    if(
-      distanceToMine != null
-			&& distanceToMine > this._maxMineDistance
-			&& closestMine.gold > castleCost
-		){
-			return closestMine;
-		}
-
-    if(closestMine.gold < castleCost){
-      var expansionCandidates = this._cache.undepletedMines.filter(function(m){
-				return m !== closestMine;
-			});
-
-      var nextMine: ZChipAPI.Mine = null;
-
-      if(orderedMines.length > 1){
-        nextMine = orderedMines[1];
+    for(let i = 0; i < orderedMines.length; i++){
+      let candidate: ZChipAPI.Mine = orderedMines[i];
+      let distanceToMine : number = this._scope.getDistanceBetweenBuildings(candidate, currentBase);
+      if(distanceToMine == null){
+        // Can't find a path, keep looking.
+        continue;
       }
-
-      if(nextMine == null){
-        // Give up. There is no more gold to be had.
+      else if(distanceToMine < this._maxMineDistance && candidate.gold > castleCost){
+        // Close enough to mine without expanding, has enough gold. Don't expand.
         return null;
       }
-
-      // TODO: If we can't reach the mine, choose a different one.
-      distanceToMine = this._scope.getDistanceBetweenBuildings(nextMine, currentBase);
-      if(
-        distanceToMine != null
-        && distanceToMine> this._maxMineDistance
-        && nextMine.gold > castleCost
-      ){
-        return nextMine;
+      else if(candidate.gold > castleCost){
+        // Only expand to this mine if it is worht the cost.
+        return candidate;
       }
+
+      // Keep looking.
     }
 
+    // No more suitable mines. Give up.
     return null;
   }
 
