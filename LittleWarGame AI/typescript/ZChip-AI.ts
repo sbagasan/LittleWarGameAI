@@ -334,14 +334,13 @@ class EconomyCommander extends CommanderBase{
 
     var orderedMines: ZChipAPI.Mine[] = this.getMinesOrderedByProximity(currentBase, true);
     var castleCost: number = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
+    // DEBUG: Earlier testing of expansion code.
+    castleCost = 4900;
 
     for(let i = 0; i < orderedMines.length; i++){
       let candidate: ZChipAPI.Mine = orderedMines[i];
       let distanceToMine : number = this._scope.getDistanceBetweenBuildings(candidate, currentBase);
-      console.log("Expansion Candidate");
-      console.log(candidate);
-      console.log(distanceToMine);
-      console.log(candidate.gold);
+
       if(distanceToMine == null){
         // Can't find a path, keep looking.
         continue;
@@ -352,7 +351,7 @@ class EconomyCommander extends CommanderBase{
       }
       else if(candidate.gold > castleCost){
         // Only expand to this mine if it is worth the cost.
-        console.log("Candidate Selected");
+
         return candidate;
       }
 
@@ -428,6 +427,32 @@ class ConstructionCommander extends CommanderBase{
 					}
 				}
 			}
+    }
+  }
+
+  // DEBUG: map
+  TEST(){
+    console.log("TEST");
+    for(let i = 0; i < this._scope.mapHeight; i++){
+      var column = "";
+      for(let j = 0; j < this._scope.mapWidth; j++){
+        if(!this._scope.positionIsPathable(j, i)){
+          column = column + "X";
+        }
+        else if(this._scope.positionIsOnRamp(j, i)){
+          column = column + "R";
+        }
+        else if(this._scope.positionIsBlocked(j, i)){
+          column = column + "U";
+        }
+        else if(this._scope.positionIsNearMine(j, i)){
+          column = column + "M";
+        }
+        else{
+          column = column + " ";
+        }
+      }
+      console.log(column);
     }
   }
 
@@ -514,6 +539,9 @@ class ConstructionCommander extends CommanderBase{
         }
       })(this, goldmine),
       this._maxBaseSize);
+
+    console.log("Build Position");
+    console.log(buildPosition);
 
     if(buildPosition == null){
       return false;
@@ -1086,6 +1114,8 @@ class GrandCommander extends CommanderBase{
   combatCommander: CombatCommander;
 
   executeOrders():void{
+    // DEBUG: Test Mapping.
+    this.constructionCommander.TEST();
     var primaryBase:ZChipAPI.Building = this.selectPrimaryBase();
 
     // Economic Orders.

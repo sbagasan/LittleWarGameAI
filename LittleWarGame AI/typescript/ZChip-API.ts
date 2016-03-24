@@ -779,7 +779,9 @@ module ZChipAPI{
       var mines = this.getBuildings({type: BuildingType.Mine});
   		for(var i = 0; i < mines.length; i++){
   			var mine = mines[i];
-  			var distance = this.getDistance(x, y, mine.x, mine.y);
+        var minePerimiter = this._getPerimeterPoints(mine, this.mapWidth, this.mapHeight);
+        var closestPair = this._estimateClosestPair([new Point(x, y)], minePerimiter);
+  			var distance = this.getDistance(closestPair.point1.x, closestPair.point1.y, closestPair.point2.x, closestPair.point2.y);
   			if(distance < HiddenMagicNumbers.minimumMineRadius){
   				return true;
   			}
