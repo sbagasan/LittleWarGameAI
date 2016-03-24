@@ -416,17 +416,17 @@ module ZChipAPI{
     private _innerScope: LWG.IScope;
 
     getDistanceBetweenBuildings(building1:Building, building2:Building):number{
-      var perimiter1 = this._getPerimeterPoints(building1, this.mapWidth, this.mapHeight);
+      var perimiter1 = this.getBuildingPerimeterPoints(building1);
       if(perimiter1 == null){
         return null;
       }
 
-      var perimiter2 = this._getPerimeterPoints(building2, this.mapWidth, this.mapHeight);
+      var perimiter2 = this.getBuildingPerimeterPoints(building2);
       if(perimiter2 == null){
         return null;
       }
 
-      var closestPair = this._estimateClosestPair(perimiter1, perimiter2);
+      var closestPair = this.estimateClosestPair(perimiter1, perimiter2);
       if(closestPair == null){
         return null;
       }
@@ -435,7 +435,7 @@ module ZChipAPI{
     }
 
     // Estimates which two points in  each collection are closest to each other.
-    private _estimateClosestPair(collection1: Point[], collection2: Point[]):{point1:Point,point2:Point}{
+    estimateClosestPair(collection1: Point[], collection2: Point[]):{point1:Point,point2:Point}{
       var closestDistance: number = Number.MAX_VALUE;
       var closestPair: {point1:Point, point2: Point} = null;
       for(let i = 0; i < collection1.length; i++){
@@ -455,23 +455,23 @@ module ZChipAPI{
       return closestPair;
     }
 
-    // Gets a collection of points around the perimiter of a building.
-    private _getPerimeterPoints(targetBuilding: Building, mapWidth: number, mapHeight:number): Point[]{
+    // Gets a collection of points around a box of the given size at the specified location.
+    getPerimeterPoints(size: number, x:number, y:number):Point[]{
       var perimiterPoints: Point[] = [];
-      var size: number = targetBuilding.size;
+      var size: number = size;
       var perimiterSize: number = size + 2;
-      var startX:number= targetBuilding.x - 1;
-      var startY:number = targetBuilding.y - 1;
+      var startX:number= x - 1;
+      var startY:number = y - 1;
 
       // Add points along the top.
       for(let i = 0; i < perimiterSize; i++){
         let x = startX + i;
-        if(x < 0 || x >= mapWidth){
+        if(x < 0 || x >= this.mapWidth){
           continue;
         }
 
         let y = startY;
-        if(y < 0 || y >= mapHeight){
+        if(y < 0 || y >= this.mapHeight){
           continue;
         }
 
@@ -481,30 +481,30 @@ module ZChipAPI{
       // Add points along the bottom.
       for(let i = 0; i < perimiterSize; i++){
         let x = startX + i;
-        if(x < 0 || x >= mapWidth){
+        if(x < 0 || x >= this.mapWidth){
           continue;
         }
 
         let y = startY + perimiterSize;
 
-        if(y < 0 || y >= mapHeight){
+        if(y < 0 || y >= this.mapHeight){
           continue;
         }
 
         perimiterPoints.push(new Point(x, y));
       }
 
-      startY = targetBuilding.y;
+      startY = y;
 
       // Add points along the left.
       for(let i = 0; i < size; i++){
         let y = startY + i;
-        if(y < 0 || y >= mapHeight){
+        if(y < 0 || y >= this.mapHeight){
           continue;
         }
 
         let x = startX;
-        if(x < 0 || x >= mapWidth){
+        if(x < 0 || x >= this.mapWidth){
           continue;
         }
 
@@ -514,13 +514,13 @@ module ZChipAPI{
       // Add points along the right.
       for(let i = 0; i < size; i++){
         let y = startY + i;
-        if(y < 0 || y >= mapHeight){
+        if(y < 0 || y >= this.mapHeight){
           continue;
         }
 
         let x = startX + perimiterSize;
 
-        if(x < 0 || x >= mapWidth){
+        if(x < 0 || x >= this.mapWidth){
           continue;
         }
 
@@ -528,6 +528,11 @@ module ZChipAPI{
       }
 
       return perimiterPoints;
+    }
+
+    // Gets a collection of points around the perimiter of a building.
+    getBuildingPerimeterPoints(targetBuilding: Building): Point[]{
+      return this.getPerimeterPoints(targetBuilding.size, targetBuilding.x, targetBuilding.y);
     }
 
     // Gets the distance between the two points along the ground. If no path can be found, null is returned.
@@ -779,8 +784,8 @@ module ZChipAPI{
       var mines = this.getBuildings({type: BuildingType.Mine});
   		for(var i = 0; i < mines.length; i++){
   			var mine = mines[i];
-        var minePerimiter = this._getPerimeterPoints(mine, this.mapWidth, this.mapHeight);
-        var closestPair = this._estimateClosestPair([new Point(x, y)], minePerimiter);
+        var minePerimiter = this.getBuildingPerimeterPoints(mine);
+        var closestPair = this.estimateClosestPair([new Point(x, y)], minePerimiter);
   			var distance = this.getDistance(closestPair.point1.x, closestPair.point1.y, closestPair.point2.x, closestPair.point2.y);
   			if(distance < HiddenMagicNumbers.minimumMineRadius){
   				return true;

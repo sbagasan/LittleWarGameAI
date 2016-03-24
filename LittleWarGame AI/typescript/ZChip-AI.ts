@@ -497,6 +497,26 @@ class ConstructionCommander extends CommanderBase{
     return true;
   }
 
+  getDistanceToBuildSite(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType, x: number, y:number){
+    var perimiter1 = this._scope.getBuildingPerimeterPoints(baseBuilding);
+    var buildingSize = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Size);
+    if(perimiter1 == null){
+      return null;
+    }
+
+    var perimiter2 = this._scope.getPerimeterPoints(buildingSize, x, y);
+    if(perimiter2 == null){
+      return null;
+    }
+
+    var closestPair = this._scope.estimateClosestPair(perimiter1, perimiter2);
+    if(closestPair == null){
+      return null;
+    }
+
+    return this._scope.getGroundDistance(closestPair.point1.x, closestPair.point1.y, closestPair.point2.x, closestPair.point2.y);
+  }
+
   // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
   buildCastleNearGoldmine(goldmine: ZChipAPI.Building, maxDistance: number):boolean{
     var cost = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
@@ -529,7 +549,7 @@ class ConstructionCommander extends CommanderBase{
             return false;
           }
 
-          let distanceToPosition = self._scope.getGroundDistance(x, y, base.x, base.y);
+          let distanceToPosition = self.getDistanceToBuildSite(base, ZChipAPI.BuildingType.Castle, x, y);
           let tooFar = distanceToPosition == null || distanceToPosition > maxDistance;
           if(tooFar){
             return false;
@@ -579,7 +599,7 @@ class ConstructionCommander extends CommanderBase{
       (function(self:ConstructionCommander, buildingPlacementType: ZChipAPI.BuildingType, base: ZChipAPI.Building):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
           let canPlace = self.canPlaceBuilding(buildingPlacementType, x, y, self._baseSpacing);
-          let distanceToPosition = self._scope.getGroundDistance(x, y, base.x, base.y);
+          let distanceToPosition = self.getDistanceToBuildSite(base, buildingPlacementType, x, y);
           let tooFar = distanceToPosition == null || distanceToPosition > self._maxBaseSize;
           return canPlace && ! tooFar;
         }
@@ -1115,7 +1135,7 @@ class GrandCommander extends CommanderBase{
 
   executeOrders():void{
     // DEBUG: Test Mapping.
-    this.constructionCommander.TEST();
+    // this.constructionCommander.TEST();
     var primaryBase:ZChipAPI.Building = this.selectPrimaryBase();
 
     // Economic Orders.
