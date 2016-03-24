@@ -63,7 +63,7 @@ module ZChipAPI{
     static neutralTeamNumber: number = 0;
 
     // The diameter around a starting position th get the ground distance from if the start position is not pathable.
-    static pathStartDistance: number = 8;
+    static pathStartDistance: number = 20;
   }
 
   class HiddenMagicStrings{
@@ -415,8 +415,48 @@ module ZChipAPI{
     // The wrapped little war game object.
     private _innerScope: LWG.IScope;
 
+    getDistanceBetweenBuildings(building1:Building, building2:Building):number{
+      var perimiter1 = this._getPerimeterPoints(building1, this.mapWidth, this.mapHeight);
+      if(perimiter1 == null){
+        return null;
+      }
+
+      var perimiter2 = this._getPerimeterPoints(building2, this.mapWidth, this.mapHeight);
+      if(perimiter2 == null){
+        return null;
+      }
+
+      var closestPair = this._estimateClosestPair(perimiter1, perimiter2);
+      if(closestPair == null){
+        return null;
+      }
+
+      return this.getGroundDistance(closestPair.point1.x, closestPair.point1.y, closestPair.point2.x, closestPair.point2.y);
+    }
+
+    // Estimates which two points in  each collection are closest to each other.
+    private _estimateClosestPair(collection1: Point[], collection2: Point[]):{point1:Point,point2:Point}{
+      var closestDistance: number = Number.MAX_VALUE;
+      var closestPair: {point1:Point, point2: Point} = null;
+      for(let i = 0; i < collection1.length; i++){
+        for(let j = 0; j < collection2.length; j++){
+          let point1 = collection1[i];
+          let point2 = collection2[j];
+          let distance = this.getDistance(point1.x, point1.y, point2.x, point2.y);
+          let pair = {point1: point1, point2: point2};
+
+          if(closestPair == null || distance < closestDistance){
+            closestDistance = distance;
+            closestPair = pair;
+          }
+        }
+      }
+
+      return closestPair;
+    }
+
     // Gets a collection of points around the perimiter of a building.
-    private getPerimeterPoints(targetBuilding: Building, mapWidth: number, mapHeight:number): Point[]{
+    private _getPerimeterPoints(targetBuilding: Building, mapWidth: number, mapHeight:number): Point[]{
       var perimiterPoints: Point[] = [];
       var size: number = targetBuilding.size;
       var perimiterSize: number = size + 2;
@@ -454,7 +494,7 @@ module ZChipAPI{
         perimiterPoints.push(new Point(x, y));
       }
 
-      startY = targetBuilding.x;
+      startY = targetBuilding.y;
 
       // Add points along the left.
       for(let i = 0; i < size; i++){
@@ -499,6 +539,7 @@ module ZChipAPI{
       if(startPoint == null){
         return null;
       }
+
       return this._innerScope.getGroundDistance(startPoint.x, startPoint.y, x2, y2);
     }
 

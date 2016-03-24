@@ -300,9 +300,12 @@ class EconomyCommander extends CommanderBase{
     let mines = this._cachedMineDistances[building.id];
 
     if(undepleted){
-      return mines.filter((mine:ZChipAPI.Mine):boolean =>{
-        return mine.gold > 0;
-      });
+      let undepletedMines: ZChipAPI.Mine[] = [];
+      for(let i = 0; i < mines.length; i++){
+        undepletedMines.push(mines[i]);
+      }
+
+      return undepletedMines;
     }
     else{
       return mines;
@@ -314,7 +317,7 @@ class EconomyCommander extends CommanderBase{
     var mineDistances: number[] = [];
     for(let i = 0; i < mines.length; i++){
       let mine = mines[i];
-      mineDistances[mine.id] = this._scope.getGroundDistance(mine.x, mine.y, targetBuilding.x, targetBuilding.y);
+      mineDistances[mine.id] = this._scope.getDistanceBetweenBuildings(mine, targetBuilding);
     }
 
     return mines.sort((a: ZChipAPI.Mine, b: ZChipAPI.Mine) =>{
@@ -324,7 +327,6 @@ class EconomyCommander extends CommanderBase{
 
   // Chooses a mine to expand to, or returns null if no expansion is warranted.
   considerExpansion(currentBase: ZChipAPI.Building): ZChipAPI.Mine{
-    console.log("considerExpansion");
     var distanceToMine: number;
 
     if(currentBase == null){
@@ -345,20 +347,13 @@ class EconomyCommander extends CommanderBase{
       return null;
     }
 
-    console.log(orderedMines);
-    console.log(closestMine);
-    console.log(currentBase);
-    console.log(this._scope.getGroundDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y));
-    console.log(this._maxMineDistance);
-
     // TODO: If we can't reach the mine, choose a different one.
-    distanceToMine = this._scope.getGroundDistance(closestMine.x, closestMine.y, currentBase.x, currentBase.y);
+    distanceToMine = this._scope.getDistanceBetweenBuildings(closestMine, currentBase);
     if(
       distanceToMine != null
 			&& distanceToMine > this._maxMineDistance
 			&& closestMine.gold > castleCost
 		){
-			console.log("Reactive expansion");
 			return closestMine;
 		}
 
@@ -379,13 +374,12 @@ class EconomyCommander extends CommanderBase{
       }
 
       // TODO: If we can't reach the mine, choose a different one.
-      distanceToMine = this._scope.getGroundDistance(nextMine.x, nextMine.y, currentBase.x, currentBase.y);
+      distanceToMine = this._scope.getDistanceBetweenBuildings(nextMine, currentBase);
       if(
         distanceToMine != null
         && distanceToMine> this._maxMineDistance
         && nextMine.gold > castleCost
       ){
-        console.log("Premptive expansion");
         return nextMine;
       }
     }
@@ -395,18 +389,13 @@ class EconomyCommander extends CommanderBase{
 
   // Assigns idle workers to mine.
   assignIdleWorkers(){
-    console.log("assignIdleWorkers");
-
     // Not using cache, because worker orders may have changed.
     var workers = <ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Stop, player: this._scope.playerNumber});
-    console.log(workers);
     for (let i = 0; i < workers.length; i++){
       var worker = workers[i];
       var closestBase = this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);
-      console.log(closestBase);
       if(closestBase != null){
         var closestMine = <ZChipAPI.Mine>this._scope.getClosestByGround(closestBase.x, closestBase.y, this._cache.undepletedMines);
-        console.log(closestMine);
         if(closestMine != null){
           worker.mine(closestMine);
         }
@@ -509,8 +498,6 @@ class ConstructionCommander extends CommanderBase{
 
   // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
   buildCastleNearGoldmine(goldmine: ZChipAPI.Building, maxDistance: number):boolean{
-    console.log("Building Castle ");
-
     var cost = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
     if(cost > this._scope.currentGold){
       return false;
@@ -562,8 +549,6 @@ class ConstructionCommander extends CommanderBase{
 
   // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
   buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType):boolean{
-    console.log("Building Type " + type);
-
     var cost = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Cost);
     if(cost > this._scope.currentGold){
       return false;
@@ -640,8 +625,6 @@ class ConstructionCommander extends CommanderBase{
 
   // Executes the build orders as determined by the priority.
   executeBuildOrders(priority: ConstructionCommanderAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedArmyUnit: ZChipAPI.UnitType){
-    console.log("Executing Build Orders.");
-
     var buildingInProgress = false;
     if(this._cache.buildings.length + this.getPendingBuildOrders().length > this._cache.completeBuildings.length){
       buildingInProgress = true;
@@ -732,7 +715,6 @@ class ConstructionCommander extends CommanderBase{
   }
 
   establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, upgradeRatio: number):ConstructionCommanderAction[]{
-    console.log("establishBuildPriority");
     var priorityQueue: ConstructionCommanderAction[] = [];
 
     if(expansionTarget != null && this._cache.workers.length > 0){
@@ -829,7 +811,6 @@ class CombatCommander extends CommanderBase{
 
   // Returns a list of mines to scout in priority order.
   getScoutMinePriority(): ZChipAPI.Mine[]{
-    console.log("getScoutMinePriority");
     if(this.scoutOrder == null){
       var scoutOrder = [];
       var players = this._scope.players;
@@ -1072,8 +1053,6 @@ class CombatCommander extends CommanderBase{
 
   // Issues all combat orders to units.
   executeCombatOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
-    console.log("executeCombatOrders");
-
     this.clearSuspicionFromScoutedMines();
 
     this.setAttackMode();
@@ -1132,7 +1111,6 @@ class GrandCommander extends CommanderBase{
 
   executeOrders():void{
     var primaryBase:ZChipAPI.Building = this.selectPrimaryBase();
-    console.log("executeOrders");
 
     // Economic Orders.
     this.economyCommander.assignIdleWorkers();
