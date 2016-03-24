@@ -302,7 +302,9 @@ class EconomyCommander extends CommanderBase{
     if(undepleted){
       let undepletedMines: ZChipAPI.Mine[] = [];
       for(let i = 0; i < mines.length; i++){
-        undepletedMines.push(mines[i]);
+        if(mines[i].gold > 0){
+          undepletedMines.push(mines[i]);
+        }
       }
 
       return undepletedMines;
