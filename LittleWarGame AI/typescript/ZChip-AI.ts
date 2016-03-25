@@ -556,7 +556,7 @@ class ConstructionCommander extends CommanderBase{
       Math.floor(goldmine.y + (goldmine.size / 2)),
       (function(self:ConstructionCommander, base: ZChipAPI.Building):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
-          let canPlace = self.canPlaceBuilding(ZChipAPI.BuildingType.Castle, x, y, 0);
+          let canPlace = self.canPlaceBuilding(ZChipAPI.BuildingType.Castle, x, y, 1);
           if(!canPlace){
             return false;
           }
