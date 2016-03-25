@@ -545,7 +545,13 @@ module ZChipAPI{
         return null;
       }
 
-      return this._innerScope.getGroundDistance(startPoint.x, startPoint.y, x2, y2);
+      var groundDistance = this._innerScope.getGroundDistance(startPoint.x, startPoint.y, x2, y2);
+      if(groundDistance <= 0){
+        return null;
+      }
+      else{
+        return groundDistance;
+      }
     }
 
     // Returns the current upgrade level of the specified upgrade type.

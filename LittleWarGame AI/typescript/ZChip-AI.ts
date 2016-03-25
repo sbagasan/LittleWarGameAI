@@ -322,7 +322,16 @@ class EconomyCommander extends CommanderBase{
       mineDistances[mine.id] = this._scope.getDistanceBetweenBuildings(mine, targetBuilding);
     }
 
-    return mines.sort((a: ZChipAPI.Mine, b: ZChipAPI.Mine) =>{
+    var reachableMines = mines.filter((m: ZChipAPI.Mine):boolean =>{
+      if(mineDistances[m.id] == null){
+        return false;
+      }
+      else{
+        return true;
+      }
+    });
+
+    return reachableMines.sort((a: ZChipAPI.Mine, b: ZChipAPI.Mine) =>{
       return mineDistances[a.id] - mineDistances[b.id];
     });
   }
@@ -372,7 +381,8 @@ class EconomyCommander extends CommanderBase{
       var worker = workers[i];
       var closestBase:ZChipAPI.ProductionBuilding = <ZChipAPI.ProductionBuilding>this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);
       if(closestBase != null){
-        var closestMine = this.getMinesOrderedByProximity(closestBase, true)[0];
+        var orderedMines =this.getMinesOrderedByProximity(closestBase, true);
+        var closestMine = orderedMines[0];
         if(closestMine != null){
           worker.mine(closestMine);
         }
