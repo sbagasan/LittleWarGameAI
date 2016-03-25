@@ -546,7 +546,7 @@ class ConstructionCommander extends CommanderBase{
       Math.floor(goldmine.y + (goldmine.size / 2)),
       (function(self:ConstructionCommander, base: ZChipAPI.Building):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
-          let canPlace = self.canPlaceBuilding(ZChipAPI.BuildingType.Castle, x, y, self._baseSpacing);
+          let canPlace = self.canPlaceBuilding(ZChipAPI.BuildingType.Castle, x, y, 0);
           if(!canPlace){
             return false;
           }
@@ -561,9 +561,6 @@ class ConstructionCommander extends CommanderBase{
         }
       })(this, goldmine),
       this._maxBaseSize);
-
-    console.log("Build Position");
-    console.log(buildPosition);
 
     if(buildPosition == null){
       return false;
