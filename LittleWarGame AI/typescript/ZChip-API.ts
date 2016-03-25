@@ -537,7 +537,11 @@ module ZChipAPI{
 
     // Gets the distance between the two points along the ground. If no path can be found, null is returned.
     getGroundDistance(x1:number, y1:number, x2: number, y2:number):number{
-      var startPoint = Common.Util.spiralSearch(x1, y1, (x:number, y:number):boolean =>{
+      var x1Round = Math.floor(x1);
+      var x2Round = Math.floor(x2);
+      var y1Round = Math.floor(y1);
+      var y2Round = Math.floor(y2);
+      var startPoint = Common.Util.spiralSearch(x1Round, y1Round, (x:number, y:number):boolean =>{
         return this.positionIsPathable(x,y);
       }, HiddenMagicNumbers.pathStartDistance);
 
@@ -545,7 +549,7 @@ module ZChipAPI{
         return null;
       }
 
-      var groundDistance = this._innerScope.getGroundDistance(startPoint.x, startPoint.y, x2, y2);
+      var groundDistance = this._innerScope.getGroundDistance(startPoint.x, startPoint.y, x2Round, y2Round);
       if(groundDistance <= 0){
         return null;
       }
