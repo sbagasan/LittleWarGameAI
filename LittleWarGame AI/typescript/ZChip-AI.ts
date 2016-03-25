@@ -1142,9 +1142,20 @@ class GrandCommander extends CommanderBase{
   // Object to handle combat unit orders.
   combatCommander: CombatCommander;
 
-  executeOrders():void{
-    // DEBUG: Test Mapping.
+  // Run test code that only need to run once on startup.
+  singleRunTest():void{
+    console.log("Running Single Test");
     // this.constructionCommander.TEST();
+    var result = Common.Util.spiralSearch(43.5, 54.5, (x:number, y:number):boolean =>{
+      return this._scope.positionIsPathable(x,y);
+    }, 20);
+
+    console.log("Spiral Finished");
+    console.log(result);
+    console.log(this._scope.positionIsPathable(result.x, result.y));
+  }
+
+  executeOrders():void{
     var primaryBase:ZChipAPI.Building = this.selectPrimaryBase();
 
     // Economic Orders.

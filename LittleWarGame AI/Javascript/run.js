@@ -9,6 +9,17 @@ if(this.init == undefined){
     this.grandCommander.setScope(superScope, cache);
     this.grandCommander.executeOrders();
   }
-}
 
-this.cycle(scope);
+  var superScope = new ZChipAPI.Scope(scope);
+  var cache = new Cache(superScope);
+
+  this.grandCommander.setScope(superScope, cache);
+  
+  // DEBUG: Run tests code.
+  this.grandCommander.singleRunTest();
+
+  this.grandCommander.executeOrders();
+}
+else{
+  this.cycle(scope);
+}

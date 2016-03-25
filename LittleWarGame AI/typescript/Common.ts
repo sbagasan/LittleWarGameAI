@@ -3,6 +3,8 @@ module Common{
   export class Util{
     // Begins at a point and spirals outwards. Returns the first point where validation succeeds.
     static spiralSearch(startX: number, startY: number, validator: (x:number, y:number)=>boolean, searchDiameter: number):ZChipAPI.Point{
+      var startXRound: number = Math.floor(startX);
+      var startYRound: number = Math.floor(startY);
       var x = 0,
         y = 0,
         delta = [0, -1],
@@ -12,8 +14,8 @@ module Common{
       for (let i = Math.pow(Math.max(width, height), 2); i>0; i--) {
         if ((-width/2 < x && x <= width/2)
             && (-height/2 < y && y <= height/2)) {
-          if(validator(startX + x,startY + y)){
-            return {x: startX + x, y: startY + y};
+          if(validator(startXRound + x,startYRound + y)){
+            return {x: startXRound + x, y: startYRound + y};
           }
         }
 
