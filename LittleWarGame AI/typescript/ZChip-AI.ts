@@ -275,18 +275,39 @@ class EconomyCommander extends CommanderBase{
   // The maximum number of workers that should work each goldmine.
   private _maxWorkersPerGoldmine: number;
 
-  constructor(maxMineDistance: number, maxWorkersPerGoldmine: number){
+  // The maximum number of goldmines to work at the same time.
+  private _maxActiveMines: number;
+
+  constructor(maxMineDistance: number, maxWorkersPerGoldmine: number, maxActiveMines: number){
     super();
 
     this._maxMineDistance = maxMineDistance;
     this._maxWorkersPerGoldmine = maxWorkersPerGoldmine;
+    this._maxActiveMines = maxActiveMines;
     this._cachedMineDistances = [];
   }
 
   // Gets the desired number of workers.
   get targetWorkerCount(): number{
     // TODO: Adjust for worker splitting.
-    return this._maxWorkersPerGoldmine;
+    return this._maxWorkersPerGoldmine * this.activeMines.length;
+  }
+
+  get activeMines(): ZChipAPI.Mine[]{
+    let activeMines: ZChipAPI.Mine[] = [];
+    for(let i = 0; i < this._cache.castles.length; i++){
+      let castle = this._cache.castles[i];
+      let mines = this.getMinesOrderedByProximity(castle, true);
+
+      for(let j = 0; j < mines.length; j++){
+        let mine = mines[j]
+        if(this._scope.getDistanceBetweenBuildings(castle, mine) < this._maxMineDistance){
+          activeMines.push(mine);
+        }
+      }
+    }
+
+    return activeMines;
   }
 
   private _cachedMineDistances: ZChipAPI.Mine[][];
@@ -376,15 +397,54 @@ class EconomyCommander extends CommanderBase{
   // Assigns idle workers to mine.
   assignIdleWorkers(){
     // Not using cache, because worker orders may have changed.
-    var workers = <ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Stop, player: this._scope.playerNumber});
-    for (let i = 0; i < workers.length; i++){
-      var worker = workers[i];
-      var closestBase:ZChipAPI.ProductionBuilding = <ZChipAPI.ProductionBuilding>this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);
-      if(closestBase != null){
-        var orderedMines =this.getMinesOrderedByProximity(closestBase, true);
-        var closestMine = orderedMines[0];
-        if(closestMine != null){
-          worker.mine(closestMine);
+    var idleWorkers: ZChipAPI.Worker[] = <ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, order: ZChipAPI.OrderType.Stop, player: this._scope.playerNumber});
+    var activeMines:ZChipAPI.Mine[] = this.activeMines;
+
+    if(activeMines.length > 0){
+      let miners: number[] = [];
+      let workers: ZChipAPI.Worker[] = this._cache.workers;
+
+      // Count the number of miners currently mining each mine.
+      for(let i = 0; i < activeMines.length; i++){
+        let activeMine = activeMines[i];
+        miners[activeMine.id] = 0;
+
+        for(let j = 0; j < workers.length; j++){
+          let worker = workers[j];
+          if(worker.targetMine != null && worker.targetMine.equals(activeMine)){
+            miners[activeMine.id] += 1;
+          }
+        }
+      }
+
+      // Send each miner to the currently least mined mine.
+      for(let i = 0; i < idleWorkers.length; i++){
+        let leastMinedMine = null;
+        let minMiners = Number.MAX_VALUE;
+        let worker = idleWorkers[i];
+        for(let j = 0; j < activeMines.length; j++){
+          let activeMine = activeMines[j];
+          let minesMiners = miners[activeMine.id];
+          if(minesMiners < minMiners){
+            minMiners = minesMiners;
+            leastMinedMine = activeMine;
+          }
+        }
+
+        worker.mine(leastMinedMine);
+        miners[leastMinedMine.id] += 1;
+      }
+    }
+    else{
+      for (let i = 0; i < idleWorkers.length; i++){
+        var worker = idleWorkers[i];
+        var closestBase:ZChipAPI.ProductionBuilding = <ZChipAPI.ProductionBuilding>this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);
+        if(closestBase != null){
+          var orderedMines =this.getMinesOrderedByProximity(closestBase, true);
+          var closestMine = orderedMines[0];
+          if(closestMine != null){
+            worker.mine(closestMine);
+          }
         }
       }
     }
@@ -1146,13 +1206,14 @@ class GrandCommander extends CommanderBase{
   singleRunTest():void{
     console.log("Running Single Test");
     // this.constructionCommander.TEST();
-    var result = Common.Util.spiralSearch(43.5, 54.5, (x:number, y:number):boolean =>{
+    /*var result = Common.Util.spiralSearch(43.5, 54.5, (x:number, y:number):boolean =>{
       return this._scope.positionIsPathable(x,y);
     }, 20);
 
     console.log("Spiral Finished");
     console.log(result);
-    console.log(this._scope.positionIsPathable(result.x, result.y));
+    console.log(this._scope.positionIsPathable(result.x, result.y));*/
+    // console.log(this._cache.workers[0]);
   }
 
   executeOrders():void{
@@ -1195,7 +1256,7 @@ class GrandCommander extends CommanderBase{
   constructor(){
     super();
     this.combatCommander = new CombatCommander(Settings.minimumArmySize, Settings.attackArmySize, Settings.upgradeRatio, Settings.attackedDamageThreshold, Settings.checkMineForBaseDistance);
-    this.economyCommander = new EconomyCommander(Settings.maxMineDistance, Settings.maxWorkersPerGoldmine);
+    this.economyCommander = new EconomyCommander(Settings.maxMineDistance, Settings.maxWorkersPerGoldmine, Settings.maxActiveMines);
     this.constructionCommander =  new  ConstructionCommander(Settings.baseSpacing, Settings.watchtowersPerCastle, Settings.supplyBuffer, Settings.maxMineDistance);
   }
 }
@@ -1214,4 +1275,5 @@ class Settings{
   static workerDefenceDistance: number = 5;
   static workerAttackRatio: number = 2;
   static checkMineForBaseDistance: number = 4;
+  static maxActiveMines: number = 2;
 }

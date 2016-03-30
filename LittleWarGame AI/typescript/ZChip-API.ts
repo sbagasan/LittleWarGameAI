@@ -1289,8 +1289,13 @@ module ZChipAPI{
       super(innerUnit, scope);
     }
 
+    // Returns the mine that the worker is currently mining at if any.
+    get targetMine(): Mine{
+      return this.innerUnit.getValue("goldMine");
+    }
+
     // Gets the building that the worker is currently building, or null if the worker is not building.
-    get currentlyBuilding(): BuildingType{;
+    get currentlyBuilding(): BuildingType{
       var building: ZChipAPI.BuildingType = TypeMapper.getBuildingTypeFromOrderType(this.currentOrder);
       if(building != null){
         return building;
