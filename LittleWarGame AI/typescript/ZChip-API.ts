@@ -114,34 +114,70 @@ module ZChipAPI{
     // Gets the unit type enum from the type name.
     static getBuildingType(typeName: string): BuildingType{
       switch(typeName){
-        case "Castle":
-          return BuildingType.Castle;
-        case "Watchtower":
-          return BuildingType.Watchtower;
-        case "Forge":
-          return BuildingType.Forge;
-        case "House":
-          return BuildingType.House;
+        case "Advanced Workshop":
+          return BuildingType.AdvancedWorkshop;
+        case "Animal Testing Lab":
+          return BuildingType.AnimalTestingLab;
         case "Barracks":
           return BuildingType.Barracks;
+        case "Castle":
+          return BuildingType.Castle;
+        case "Church":
+          return BuildingType.Church;
+        case "Dragons Lair":
+          return BuildingType.DragonsLair;
+        case "Forge":
+          return BuildingType.Forge;
+        case "Fortress":
+          return BuildingType.Fortress;
+        case "House":
+          return BuildingType.House;
+        case "Mages Guild":
+          return BuildingType.MagesGuild;
         case "Goldmine":
           return BuildingType.Mine;
+        case "Watchtower":
+          return BuildingType.Watchtower;
+        case "Watchtower (detection)":
+          return BuildingType.WatchtowerDetection;
+        case "Wherewolves Den":
+          return BuildingType.WherewolvesDen;
+        case "Wolves Den":
+          return BuildingType.WolvesDen;
+        case "Workshop":
+          return BuildingType.Workshop;
+        default:
+          throw "Cannot find building type " + typeName;
       }
     }
 
     // Gets the building type the current order will generate, or null if it is not a build order.
     static getBuildingTypeFromOrderType(type: OrderType):BuildingType{
       switch(type){
+        case OrderType.BuildAdvancedWorkshop:
+          return BuildingType.AdvancedWorkshop;
+        case OrderType.BuildAnimalTestingLab:
+          return BuildingType.AnimalTestingLab;
+        case OrderType.BuildBarracks:
+          return BuildingType.Barracks;
         case OrderType.BuildCastle:
           return BuildingType.Castle;
-        case OrderType.BuildWatchtower:
-          return BuildingType.Watchtower;
+        case OrderType.BuildChurch:
+          return BuildingType.Church;
+        case OrderType.BuildDragonsLair:
+          return BuildingType.DragonsLair;
         case OrderType.BuildForge:
           return BuildingType.Forge;
         case OrderType.BuildHouse:
           return BuildingType.House;
-        case OrderType.BuildBarracks:
-          return BuildingType.Barracks;
+        case OrderType.BuildMagesGuild:
+          return BuildingType.MagesGuild;
+        case OrderType.BuildWatchtower:
+          return BuildingType.Watchtower;
+        case OrderType.BuildWolvesDen:
+          return BuildingType.WolvesDen;
+        case OrderType.BuildWorkshop:
+          return BuildingType.Workshop;
         default:
           return null;
       }
@@ -150,12 +186,38 @@ module ZChipAPI{
     // Gets the unit type enum from the type name.
     static getUnitType(typeName: string): UnitType{
       switch(typeName){
-        case "Worker":
-          return UnitType.Worker;
-        case "Soldier":
-          return UnitType.Soldier;
+        case "Airship":
+          return UnitType.Airship;
         case "Archer":
           return UnitType.Archer;
+        case "Ballista":
+          return UnitType.Ballista;
+        case "Bird":
+          return UnitType.Bird;
+        case "Catapult":
+          return UnitType.Catapult;
+        case "Dragon":
+          return UnitType.Dragon;
+        case "Healing Ward":
+          return UnitType.HealingWard;
+        case "Mage":
+          return UnitType.Mage;
+        case "Priest":
+          return UnitType.Priest;
+        case "Shadow Wolf":
+          return UnitType.ShadowWolf;
+        case "Skeleton":
+          return UnitType.Skeleton;
+        case "Slowing Field":
+          return UnitType.SlowField;
+        case "Soldier":
+          return UnitType.Soldier;
+        case "Werewolf":
+          return UnitType.Werewolf;
+        case "Wolf":
+          return UnitType.Wolf;
+        case "Worker":
+          return UnitType.Worker;
         default:
           return null;
       }
@@ -163,30 +225,70 @@ module ZChipAPI{
 
     static getTrainOrderFromUnitType(type:UnitType):OrderType{
       switch(type){
-        case UnitType.Worker:
-          return OrderType.TrainWorker;
-        case UnitType.Soldier:
-          return OrderType.TrainSoldier;
+        case UnitType.Airship:
+          return OrderType.TrainAirship;
         case UnitType.Archer:
           return OrderType.TrainArcher;
+        case UnitType.Ballista:
+          return OrderType.TrainBallista;
+        case UnitType.Bird:
+          return OrderType.TrainBird;
+        case UnitType.Catapult:
+          return OrderType.TrainCatapult;
+        case UnitType.Dragon:
+          return OrderType.TrainDragon;
+        case UnitType.Mage:
+          return OrderType.TrainMage;
+        case UnitType.Priest:
+          return OrderType.TrainPriest;
+        case UnitType.Soldier:
+          return OrderType.TrainSoldier;
+        case UnitType.Werewolf:
+          return OrderType.TrainWerewolf;
+        case UnitType.Wolf:
+          return OrderType.TrainWolf;
+        case UnitType.Worker:
+          return OrderType.TrainWorker;
+        default:
+          throw "No mapping for building: " + type.toString();
       }
     }
 
     // Gets the name of the building type.
     static getBuildingName(type: BuildingType): string{
       switch(type){
-        case BuildingType.Mine:
-          return "Goldmine";
-        case BuildingType.Castle:
-          return "Castle";
-        case BuildingType.Watchtower:
-          return "Watchtower";
-        case BuildingType.Forge:
-          return "Forge";
-        case BuildingType.House:
-          return "House";
+        case BuildingType.AdvancedWorkshop:
+          return "Advanced Workshop";
+        case BuildingType.AnimalTestingLab:
+          return "Animal Testing Lab";
         case BuildingType.Barracks:
           return "Barracks";
+        case BuildingType.Castle:
+          return "Castle";
+        case BuildingType.Church:
+          return "Church";
+        case BuildingType.DragonsLair:
+          return "Dragons Lair";
+        case BuildingType.Forge:
+          return "Forge";
+        case BuildingType.Fortress:
+          return "Fortress";
+        case BuildingType.House:
+          return "House";
+        case BuildingType.MagesGuild:
+          return "Mages Guild";
+        case BuildingType.Mine:
+          return "Goldmine";
+        case BuildingType.Watchtower:
+          return "Watchtower";
+        case BuildingType.WatchtowerDetection:
+          return "Watchtower (detection)";
+        case BuildingType.WherewolvesDen:
+          return "Wherewolves Den";
+        case BuildingType.WolvesDen:
+          return "WolvesDen";
+        case BuildingType.Workshop:
+          return "Workshop";
         default:
           throw "No mapping for building: " + type.toString();
       }
@@ -195,16 +297,30 @@ module ZChipAPI{
     // Gets the order string to construct the building type.
     static getBuildOrderTypeFromBuildingType(type: BuildingType): OrderType{
       switch(type){
+        case BuildingType.AdvancedWorkshop:
+          return OrderType.BuildAdvancedWorkshop;
+        case BuildingType.AnimalTestingLab:
+          return OrderType.BuildAnimalTestingLab;
+        case BuildingType.Barracks:
+          return OrderType.BuildBarracks;
         case BuildingType.Castle:
           return OrderType.BuildCastle;
-        case BuildingType.Watchtower:
-          return OrderType.BuildWatchtower;
+        case BuildingType.Church:
+          return OrderType.BuildChurch;
+        case BuildingType.DragonsLair:
+          return OrderType.BuildDragonsLair;
         case BuildingType.Forge:
           return OrderType.BuildForge;
         case BuildingType.House:
           return OrderType.BuildHouse;
-        case BuildingType.Barracks:
-          return OrderType.BuildBarracks;
+        case BuildingType.MagesGuild:
+          return OrderType.BuildMagesGuild;
+        case BuildingType.Watchtower:
+          return OrderType.BuildWatchtower;
+        case BuildingType.WolvesDen:
+          return OrderType.BuildWolvesDen;
+        case BuildingType.Workshop:
+          return OrderType.BuildWorkshop;
         default:
           throw "No mapping for build order: " + type.toString();
       }
@@ -213,12 +329,38 @@ module ZChipAPI{
     // Gets the name of the unit type.
     static getUnitName(type: UnitType): string{
       switch (type){
-        case UnitType.Worker:
-          return "Worker";
-        case UnitType.Soldier:
-          return "Soldier";
+        case UnitType.Airship:
+          return "Airship"
         case UnitType.Archer:
-          return "Archer";
+          return "Archer"
+        case UnitType.Ballista:
+          return "Ballista"
+        case UnitType.Bird:
+          return "Bird"
+        case UnitType.Catapult:
+          return "Catapult"
+        case UnitType.Dragon:
+          return "Dragon"
+        case UnitType.HealingWard:
+          return "Healing Ward";
+        case UnitType.Mage:
+          return "Mage"
+        case UnitType.Priest:
+          return "Priest"
+        case UnitType.ShadowWolf:
+          return "Shadow Wolf"
+        case UnitType.Skeleton:
+          return "Skeleton"
+        case UnitType.SlowField:
+          return "Slowing Field";
+        case UnitType.Soldier:
+          return "Soldier"
+        case UnitType.Werewolf:
+          return "Werewolf"
+        case UnitType.Wolf:
+          return "Wolf"
+        case UnitType.Worker:
+          return "Worker"
         default:
           throw "No mapping for unit: " + type.toString();
       }
@@ -226,38 +368,72 @@ module ZChipAPI{
 
     static getOrderType(orderName: string):OrderType{
       switch(orderName){
-        case "Stop":
-          return OrderType.Stop;
-        case "Mine":
-          return OrderType.Mine;
-        case "Repair":
-          return OrderType.Repair;
+        case "Attack":
+          return OrderType.Attack;
+        case "AMove":
+          return OrderType.AttackMove;
+        case "Build Advanced Workshop":
+          return OrderType.BuildAdvancedWorkshop;
+        case "Build Animal Testing Lab":
+          return OrderType.BuildAnimalTestingLab;
+        case "Build Barracks":
+          return OrderType.BuildBarracks;
         case "Build Castle":
           return OrderType.BuildCastle;
-        case "Build Watchtower":
-          return OrderType.BuildWatchtower;
+        case "Build Church":
+          return OrderType.BuildChurch;
+        case "Build Dragons Lair":
+          return OrderType.BuildDragonsLair;
         case "Build Forge":
           return OrderType.BuildForge;
         case "Build House":
           return OrderType.BuildHouse;
-        case "Build Barracks":
-          return OrderType.BuildBarracks;
-        case "Attack Upgrade":
-          return OrderType.UpgradeAttack;
-        case "Moveto":
-          return OrderType.MoveTo;
+        case "Build Mages Guild":
+          return OrderType.BuildMagesGuild;
+        case "Build Watchtower":
+          return OrderType.BuildWatchtower;
+        case "Build Wolves Den":
+          return OrderType.BuildWolvesDen;
+        case "Build Workshop":
+          return OrderType.BuildWorkshop;
+        case "Mine":
+          return OrderType.Mine;
         case "Move":
           return OrderType.Move;
-        case "AMove":
-          return OrderType.AttackMove;
-        case "Attack":
-          return OrderType.Attack;
-        case "Train Worker":
-          return OrderType.TrainWorker;
+        case "Moveto":
+          return OrderType.MoveTo;
+        case "Repair":
+          return OrderType.Repair;
+        case "Stop":
+          return OrderType.Stop;
+        case "Construct Airship":
+          return OrderType.TrainAirship;
         case "Train Archer":
           return OrderType.TrainArcher;
+        case "Construct Ballista":
+          return OrderType.TrainBallista;
+        case "Train Bird":
+          return OrderType.TrainBird;
+        case "Construct Catapult":
+          return OrderType.TrainCatapult;
+        case "Train Dragon":
+          return OrderType.TrainDragon;
+        case "Train Mage":
+          return OrderType.TrainMage;
+        case "Train Priest":
+          return OrderType.TrainPriest;
         case "Train Soldier":
           return OrderType.TrainSoldier;
+        case "Train Werewolf":
+          return OrderType.TrainWerewolf;
+        case "Train Wolf":
+          return OrderType.TrainWolf;
+        case "Train Worker":
+          return OrderType.TrainWorker;
+        case "Upgrade Armour":
+          return OrderType.UpgradeArmour;
+        case "Upgrade Attack":
+          return OrderType.UpgradeAttack;
         default:
           throw "No mapping for order named:" + orderName;
       }
@@ -307,40 +483,72 @@ module ZChipAPI{
 
     static getOrderName(type: OrderType): string{
       switch(type){
-        case OrderType.Stop:
-          return "Stop";
-        case OrderType.Mine:
-          return "Mine";
-        case OrderType.Repair:
-          return "Repair";
+        case OrderType.Attack:
+          return "Attack";
+        case OrderType.AttackMove:
+          return "AMove";
+        case OrderType.BuildAdvancedWorkshop:
+          return "Build Advanced Workshop";
+        case OrderType.BuildAnimalTestingLab:
+          return "Build Animal Testing Lab";
+        case OrderType.BuildBarracks:
+          return "Build Barracks";
         case OrderType.BuildCastle:
           return "Build Castle";
-        case OrderType.BuildWatchtower:
-          return "Build Watchtower";
+        case OrderType.BuildChurch:
+          return "Build Church";
+        case OrderType.BuildDragonsLair:
+          return "Build Dragons Lair";
         case OrderType.BuildForge:
           return "Build Forge";
         case OrderType.BuildHouse:
           return "Build House";
-        case OrderType.BuildBarracks:
-          return "Build Barracks";
-        case OrderType.UpgradeAttack:
-          return "Attack Upgrade";
-        case OrderType.UpgradeArmour:
-          return "Armor Upgrade";
-        case OrderType.MoveTo:
-          return "Moveto";
+        case OrderType.BuildMagesGuild:
+          return "Build Mages Guild";
+        case OrderType.BuildWatchtower:
+          return "Build Watchtower";
+        case OrderType.BuildWolvesDen:
+          return "Build Wolves Den";
+        case OrderType.BuildWorkshop:
+          return "Build Workshop";
+        case OrderType.Mine:
+          return "Mine";
         case OrderType.Move:
           return "Move";
-        case OrderType.AttackMove:
-          return "AMove";
-        case OrderType.Attack:
-          return "Attack";
-        case OrderType.TrainWorker:
-          return "Train Worker";
+        case OrderType.MoveTo:
+          return "Moveto";
+        case OrderType.Repair:
+          return "Repair";
+        case OrderType.Stop:
+          return "Stop";
+        case OrderType.TrainAirship:
+          return "Construct Airship";
         case OrderType.TrainArcher:
           return "Train Archer";
+        case OrderType.TrainBallista:
+          return "Construct Ballista";
+        case OrderType.TrainBird:
+          return "Train Bird";
+        case OrderType.TrainCatapult:
+          return "Construct Catapult";
+        case OrderType.TrainDragon:
+          return "Train Dragon";
+        case OrderType.TrainMage:
+          return "Train Mage";
+        case OrderType.TrainPriest:
+          return "Train Priest";
         case OrderType.TrainSoldier:
           return "Train Soldier";
+        case OrderType.TrainWerewolf:
+          return "Train Werewolf";
+        case OrderType.TrainWolf:
+          return "Train Wolf";
+        case OrderType.TrainWorker:
+          return "Train Worker";
+        case OrderType.UpgradeArmour:
+          return "Armor Upgrade";
+        case OrderType.UpgradeAttack:
+          return "Attack Upgrade";
         default:
           throw "No mapping for order: " + type.toString();
       }
@@ -374,40 +582,79 @@ module ZChipAPI{
 
   // Represents all orders.
   export enum OrderType{
-    Stop,
-    MoveTo,
-    Move,
-    AttackMove,
     Attack,
-    Mine,
-    Repair,
+    AttackMove,
+    BuildAdvancedWorkshop,
+    BuildAnimalTestingLab,
+    BuildBarracks,
     BuildCastle,
-    BuildWatchtower,
+    BuildChurch,
+    BuildDragonsLair,
     BuildForge,
     BuildHouse,
-    BuildBarracks,
-    TrainWorker,
+    BuildMagesGuild,
+    BuildWatchtower,
+    BuildWolvesDen,
+    BuildWorkshop,
+    Mine,
+    Move,
+    MoveTo,
+    Repair,
+    Stop,
+    TrainAirship,
     TrainArcher,
+    TrainBallista,
+    TrainBird,
+    TrainCatapult,
+    TrainDragon,
+    TrainMage,
+    TrainPriest,
     TrainSoldier,
-    UpgradeAttack,
-    UpgradeArmour
+    TrainWerewolf,
+    TrainWolf,
+    TrainWorker,
+    UpgradeArmour,
+    UpgradeAttack
   }
 
   // Represents building types.
   export enum BuildingType{
-    Mine,
+    AdvancedWorkshop,
+    AnimalTestingLab,
+    Barracks,
     Castle,
-    Watchtower,
+    Church,
+    DragonsLair,
     Forge,
+    Fortress,
     House,
-    Barracks
+    MagesGuild,
+    Mine,
+    Watchtower,
+    WatchtowerDetection,
+    WherewolvesDen,
+    WolvesDen,
+    Workshop
   }
 
   // Represents unit types.
   export enum UnitType{
-    Worker,
+    Airship,
+    Archer,
+    Ballista,
+    Bird,
+    Catapult,
+    Dragon,
+    HealingWard,
+    Mage,
+    Priest,
+    ShadowWolf,
+    Skeleton,
+    SlowField,
     Soldier,
-    Archer
+    Werewolf,
+    Wolf,
+    Worker
   }
 
   // A wrapper for the little war game scope object.
