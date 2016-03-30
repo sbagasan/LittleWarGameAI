@@ -1290,8 +1290,14 @@ module ZChipAPI{
     }
 
     // Returns the mine that the worker is currently mining at if any.
-    get targetMine(): Mine{
-      return this.innerUnit.getValue("goldMine");
+    get targetMineId(): number{
+      // TODO: Hella Haxors. This isn't in the API.
+      let mine: any = this._innerUnit.getValue("goldMine");
+      if(mine != null){
+        return mine.id;
+      }
+
+      return null;
     }
 
     // Gets the building that the worker is currently building, or null if the worker is not building.

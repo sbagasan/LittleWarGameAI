@@ -14,7 +14,7 @@ if(this.init == undefined){
   var cache = new Cache(superScope);
 
   this.grandCommander.setScope(superScope, cache);
-  
+
   // DEBUG: Run tests code.
   this.grandCommander.singleRunTest();
 

@@ -303,6 +303,10 @@ class EconomyCommander extends CommanderBase{
         let mine = mines[j]
         if(this._scope.getDistanceBetweenBuildings(castle, mine) < this._maxMineDistance){
           activeMines.push(mine);
+
+          if(activeMines.length >= this._maxActiveMines){
+            return activeMines;
+          }
         }
       }
     }
@@ -401,17 +405,21 @@ class EconomyCommander extends CommanderBase{
     var activeMines:ZChipAPI.Mine[] = this.activeMines;
 
     if(activeMines.length > 0){
-      let miners: number[] = [];
       let workers: ZChipAPI.Worker[] = this._cache.workers;
+      let miners: number[] = [];
+      for(let i = 0; i < activeMines.length; i++){
+        let activeMine = activeMines[i];
+        miners[activeMine.id] = 0;
+      }
 
       // Count the number of miners currently mining each mine.
       for(let i = 0; i < activeMines.length; i++){
         let activeMine = activeMines[i];
-        miners[activeMine.id] = 0;
 
         for(let j = 0; j < workers.length; j++){
           let worker = workers[j];
-          if(worker.targetMine != null && worker.targetMine.equals(activeMine)){
+          // TODO: Comparing Ids is kinda hax.
+          if(worker.targetMineId != null && worker.targetMineId == activeMine.id){
             miners[activeMine.id] += 1;
           }
         }
@@ -425,7 +433,7 @@ class EconomyCommander extends CommanderBase{
         for(let j = 0; j < activeMines.length; j++){
           let activeMine = activeMines[j];
           let minesMiners = miners[activeMine.id];
-          if(minesMiners < minMiners){
+          if(leastMinedMine == null || minesMiners < minMiners){
             minMiners = minesMiners;
             leastMinedMine = activeMine;
           }
@@ -436,6 +444,7 @@ class EconomyCommander extends CommanderBase{
       }
     }
     else{
+      console.log("No active mines. Sending workers to whatever is closest.");
       for (let i = 0; i < idleWorkers.length; i++){
         var worker = idleWorkers[i];
         var closestBase:ZChipAPI.ProductionBuilding = <ZChipAPI.ProductionBuilding>this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);

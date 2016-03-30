@@ -14,7 +14,6 @@ module LWG {
     getGold(): number;
     positionIsPathable(x: number, y:number);
     fieldIsRamp(x: number, y:number);
-    fieldIsBlocked(x:number, y:number);
     getMapWidth(): number;
     getMapHeight(): number;
     getArrayOfPlayerNumbers(): number[];
