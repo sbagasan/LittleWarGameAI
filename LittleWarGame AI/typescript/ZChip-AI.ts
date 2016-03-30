@@ -770,7 +770,7 @@ class ConstructionCommander extends CommanderBase{
     if(this._cache.forges.length < 1 && this._cache.army.length > upgradeRatio){
       priorityQueue.push(ConstructionCommanderAction.BuildForge);
 
-      if(this._scope.currentGold < this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Forge, ZChipAPI.TypeField.Cost)){
+      if(this._scope.currentGold < this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Forge, ZChipAPI.TypeField.Cost) && this._cache.army.length >= this._cache.enemyArmy.length){
         return priorityQueue;
       }
     }
