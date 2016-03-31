@@ -278,15 +278,19 @@ class EconomyCommander extends CommanderBase{
   // The maximum number of goldmines to work at the same time.
   private _maxActiveMines: number;
 
+  // The number of goldmines the ai should try to work at the same time.
+  private _desiredActiveMines: number;
+
   // This caches the distance between buildings.
   private _cachedBuildingDistances: number[][];
 
-  constructor(maxMineDistance: number, maxWorkersPerGoldmine: number, maxActiveMines: number){
+  constructor(maxMineDistance: number, maxWorkersPerGoldmine: number, maxActiveMines: number, desiredActiveMines: number){
     super();
 
     this._maxMineDistance = maxMineDistance;
     this._maxWorkersPerGoldmine = maxWorkersPerGoldmine;
     this._maxActiveMines = maxActiveMines;
+    this._desiredActiveMines = desiredActiveMines;
     this._cachedBuildingDistances = [];
   }
 
@@ -369,22 +373,29 @@ class EconomyCommander extends CommanderBase{
       return null;
     }
 
+    if(this.activeMines.length >= this._desiredActiveMines){
+      // We think we have enough mines.
+      return null;
+    }
+
     var orderedMines: ZChipAPI.Mine[] = this.getMinesOrderedByProximity(currentBase, true);
     var castleCost: number = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
-    // DEBUG: Earlier testing of expansion code.
-    castleCost = 4900;
 
     for(let i = 0; i < orderedMines.length; i++){
       let candidate: ZChipAPI.Mine = orderedMines[i];
+      if(this.activeMines.filter((a:ZChipAPI.Mine): boolean=>{
+        return candidate.equals(a);
+      }).length > 0){
+        // Don't expand to the mine if we're already working it.
+
+        continue;
+      }
+
       let distanceToMine : number = this.getCachedDistanceBetweenBuildings(currentBase, candidate);
 
       if(distanceToMine == null){
         // Can't find a path, keep looking.
         continue;
-      }
-      else if(distanceToMine < this._maxMineDistance && candidate.gold > castleCost){
-        // Close enough to mine without expanding, has enough gold. Don't expand.
-        return null;
       }
       else if(candidate.gold > castleCost){
         // Only expand to this mine if it is worth the cost.
@@ -600,7 +611,7 @@ class ConstructionCommander extends CommanderBase{
   }
 
   // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
-  buildCastleNearGoldmine(goldmine: ZChipAPI.Building, maxDistance: number):boolean{
+  buildCastleNearGoldmine(goldmine: ZChipAPI.Building, maxMineDistance: number):boolean{
     var cost = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
     if(cost > this._scope.currentGold){
       return false;
@@ -632,7 +643,7 @@ class ConstructionCommander extends CommanderBase{
           }
 
           let distanceToPosition = self.getDistanceToBuildSite(base, ZChipAPI.BuildingType.Castle, x, y);
-          let tooFar = distanceToPosition == null || distanceToPosition > maxDistance;
+          let tooFar = distanceToPosition == null || distanceToPosition > maxMineDistance;
           if(tooFar){
             return false;
           }
@@ -1266,7 +1277,7 @@ class GrandCommander extends CommanderBase{
   constructor(){
     super();
     this.combatCommander = new CombatCommander(Settings.minimumArmySize, Settings.attackArmySize, Settings.upgradeRatio, Settings.attackedDamageThreshold, Settings.checkMineForBaseDistance);
-    this.economyCommander = new EconomyCommander(Settings.maxMineDistance, Settings.maxWorkersPerGoldmine, Settings.maxActiveMines);
+    this.economyCommander = new EconomyCommander(Settings.maxMineDistance, Settings.maxWorkersPerGoldmine, Settings.maxActiveMines, Settings.desiredActiveMines);
     this.constructionCommander =  new  ConstructionCommander(Settings.baseSpacing, Settings.watchtowersPerCastle, Settings.supplyBuffer, Settings.maxMineDistance);
   }
 }
@@ -1277,7 +1288,7 @@ class Settings{
   static attackArmySize:number= 10;
   static upgradeRatio:number = 1; // Should be 5.
   static attackedDamageThreshold: number = 1;
-  static maxMineDistance: number = 10;
+  static maxMineDistance: number = 15;
   static maxWorkersPerGoldmine:number = 10;
   static baseSpacing: number = 2;
   static watchtowersPerCastle: number = 0; // Should be 1.
@@ -1285,5 +1296,6 @@ class Settings{
   static workerDefenceDistance: number = 5;
   static workerAttackRatio: number = 2;
   static checkMineForBaseDistance: number = 4;
-  static maxActiveMines: number = 2;
+  static maxActiveMines: number = 3;
+  static desiredActiveMines: number = 2;
 }
