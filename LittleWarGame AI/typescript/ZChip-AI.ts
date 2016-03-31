@@ -278,13 +278,16 @@ class EconomyCommander extends CommanderBase{
   // The maximum number of goldmines to work at the same time.
   private _maxActiveMines: number;
 
+  // This caches the distance between buildings.
+  private _cachedBuildingDistances: number[][];
+
   constructor(maxMineDistance: number, maxWorkersPerGoldmine: number, maxActiveMines: number){
     super();
 
     this._maxMineDistance = maxMineDistance;
     this._maxWorkersPerGoldmine = maxWorkersPerGoldmine;
     this._maxActiveMines = maxActiveMines;
-    this._cachedMineDistances = [];
+    this._cachedBuildingDistances = [];
   }
 
   // Gets the desired number of workers.
@@ -301,7 +304,7 @@ class EconomyCommander extends CommanderBase{
 
       for(let j = 0; j < mines.length; j++){
         let mine = mines[j]
-        if(this._scope.getDistanceBetweenBuildings(castle, mine) < this._maxMineDistance){
+        if(this.getCachedDistanceBetweenBuildings(castle, mine) < this._maxMineDistance){
           activeMines.push(mine);
 
           if(activeMines.length >= this._maxActiveMines){
@@ -314,15 +317,35 @@ class EconomyCommander extends CommanderBase{
     return activeMines;
   }
 
-  private _cachedMineDistances: ZChipAPI.Mine[][];
+  // Gets the distance between two buildings and caches it.
+  private getCachedDistanceBetweenBuildings(castle: ZChipAPI.Building, mine:ZChipAPI.Mine): number{
+    if(this._cachedBuildingDistances[castle.id] === undefined){
+      this._cachedBuildingDistances[castle.id] = [];
+    }
+
+    if(this._cachedBuildingDistances[castle.id][mine.id] === undefined){
+      this._cachedBuildingDistances[castle.id][mine.id] = this._scope.getDistanceBetweenBuildings(castle, mine);
+    }
+
+    return this._cachedBuildingDistances[castle.id][mine.id];
+  }
 
   // Gets the mines ordered by proximity to the specified building.
   private getMinesOrderedByProximity(building: ZChipAPI.Building, undepleted:boolean): ZChipAPI.Mine[]{
-    if(this._cachedMineDistances[building.id] == null){
-      this._cachedMineDistances[building.id] = this.orderMinesByProximityToBuilding(building, this._cache.mines);
-    }
+    let reachableMines = this._cache.mines.filter((m: ZChipAPI.Mine):boolean =>{
+      if(this.getCachedDistanceBetweenBuildings(building, m) == null){
+        return false;
+      }
+      else{
+        return true;
+      }
+    });
 
-    let mines = this._cachedMineDistances[building.id];
+    let mines = reachableMines.sort(
+      (a:ZChipAPI.Mine, b:ZChipAPI.Mine): number => {
+        return (this.getCachedDistanceBetweenBuildings(building, a) - this.getCachedDistanceBetweenBuildings(building, b));
+      }
+    );
 
     if(undepleted){
       let undepletedMines: ZChipAPI.Mine[] = [];
@@ -339,28 +362,6 @@ class EconomyCommander extends CommanderBase{
     }
   }
 
-  // Orders the mines by their proximity (by ground) to the designated building.
-  private orderMinesByProximityToBuilding(targetBuilding:ZChipAPI.Building, mines:ZChipAPI.Mine[]): ZChipAPI.Mine[]{
-    var mineDistances: number[] = [];
-    for(let i = 0; i < mines.length; i++){
-      let mine = mines[i];
-      mineDistances[mine.id] = this._scope.getDistanceBetweenBuildings(mine, targetBuilding);
-    }
-
-    var reachableMines = mines.filter((m: ZChipAPI.Mine):boolean =>{
-      if(mineDistances[m.id] == null){
-        return false;
-      }
-      else{
-        return true;
-      }
-    });
-
-    return reachableMines.sort((a: ZChipAPI.Mine, b: ZChipAPI.Mine) =>{
-      return mineDistances[a.id] - mineDistances[b.id];
-    });
-  }
-
   // Chooses a mine to expand to, or returns null if no expansion is warranted.
   considerExpansion(currentBase: ZChipAPI.Building): ZChipAPI.Mine{
     if(currentBase == null){
@@ -375,7 +376,7 @@ class EconomyCommander extends CommanderBase{
 
     for(let i = 0; i < orderedMines.length; i++){
       let candidate: ZChipAPI.Mine = orderedMines[i];
-      let distanceToMine : number = this._scope.getDistanceBetweenBuildings(candidate, currentBase);
+      let distanceToMine : number = this.getCachedDistanceBetweenBuildings(currentBase, candidate);
 
       if(distanceToMine == null){
         // Can't find a path, keep looking.
@@ -1276,7 +1277,7 @@ class Settings{
   static attackArmySize:number= 10;
   static upgradeRatio:number = 1; // Should be 5.
   static attackedDamageThreshold: number = 1;
-  static maxMineDistance: number = 15;
+  static maxMineDistance: number = 10;
   static maxWorkersPerGoldmine:number = 10;
   static baseSpacing: number = 2;
   static watchtowersPerCastle: number = 0; // Should be 1.
