@@ -430,9 +430,16 @@ class EconomyCommander extends CommanderBase{
 
         for(let j = 0; j < workers.length; j++){
           let worker = workers[j];
-          // TODO: Comparing Ids is kinda hax.
-          if(worker.targetMineId != null && worker.targetMineId == activeMine.id){
-            miners[activeMine.id] += 1;
+          if(worker.currentOrder == ZChipAPI.OrderType.Mine){
+            // TODO: Comparing Ids is kinda hax.
+            if(worker.targetMineId != null && worker.targetMineId == activeMine.id){
+              if(miners[activeMine.id] > this._maxWorkersPerGoldmine){
+                worker.stop();
+              }
+              else{
+                miners[activeMine.id] += 1;
+              }
+            }
           }
         }
       }
@@ -456,7 +463,6 @@ class EconomyCommander extends CommanderBase{
       }
     }
     else{
-      console.log("No active mines. Sending workers to whatever is closest.");
       for (let i = 0; i < idleWorkers.length; i++){
         var worker = idleWorkers[i];
         var closestBase:ZChipAPI.ProductionBuilding = <ZChipAPI.ProductionBuilding>this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);
@@ -487,6 +493,12 @@ class ConstructionCommander extends CommanderBase{
 
   // The maximum distance from a mine to build a castle.
   private _maxMineDistance: number;
+
+  // The last location that the AI tried to build.
+  private _lastBuildSite: ZChipAPI.Point;
+
+  // A list of locations that the AI has tried to build at repeatedly.
+  private _blacklistedBuildSites: ZChipAPI.Point[];
 
   // Repair dammaged buildings or finishes buildings that were left incomplete.
   rebuildAndRepair(){
@@ -584,6 +596,36 @@ class ConstructionCommander extends CommanderBase{
         if(positionTooNearMine){
           return false;
         }
+
+        console.log(i, j);
+        console.log(this._lastBuildSite);
+
+        // If we try to build in the same spot twice in a row, something has gone wrong and we probably can't actually build there.
+        if(this._lastBuildSite != null && i == this._lastBuildSite.x && j == this._lastBuildSite.y){
+          let alreadyInBlacklist = false;
+
+          for(let k = 0; j < this._blacklistedBuildSites.length; k++){
+            let blacklistedSite = this._blacklistedBuildSites[k];
+
+            if(blacklistedSite.x == this._lastBuildSite.x && blacklistedSite.y == this._lastBuildSite.y){
+              alreadyInBlacklist = true;
+              continue;
+            }
+          }
+
+          if(!alreadyInBlacklist){
+            this._blacklistedBuildSites.push(this._lastBuildSite);
+          }
+        }
+
+        console.log(this._blacklistedBuildSites);
+        for(let k = 0; k < this._blacklistedBuildSites.length; k++){
+          let blacklistedSite = this._blacklistedBuildSites[k];
+
+          if(blacklistedSite.x == i && blacklistedSite.y == j){
+            return false;
+          }
+        }
       }
     }
 
@@ -657,6 +699,7 @@ class ConstructionCommander extends CommanderBase{
       return false;
     }
 
+    this._lastBuildSite = buildPosition;
     closestWorker.build(ZChipAPI.BuildingType.Castle, buildPosition.x, buildPosition.y);
     return true;
   }
@@ -703,6 +746,8 @@ class ConstructionCommander extends CommanderBase{
       return false;
     }
 
+    this._lastBuildSite = buildPosition;
+    console.log("building at " + this._lastBuildSite.x + "," + this._lastBuildSite.y + "(" + buildPosition.x + "," + buildPosition.y + ")");
     closestWorker.build(type, buildPosition.x, buildPosition.y);
     return true;
   }
@@ -881,6 +926,8 @@ class ConstructionCommander extends CommanderBase{
     this._watchtowersPerCastle = watchtowersPerCastle;
     this._supplyBuffer = supplyBuffer;
     this._maxMineDistance = maxMineDistance;
+    this._lastBuildSite = null;
+    this._blacklistedBuildSites = [];
 
     this._maxBaseSize = 30;
   }
@@ -1192,7 +1239,7 @@ class CombatCommander extends CommanderBase{
         var closestEnemy: ZChipAPI.Unit = <ZChipAPI.Unit>this._scope.getClosestByGround(worker.x, worker.y, enemies)
         var distanceToTarget: number = this._scope.getGroundDistance(worker.x, worker.y, closestEnemy.x, closestEnemy.y)
         if(distanceToTarget != null && distanceToTarget > Settings.workerDefenceDistance){
-          worker.attack(closestEnemy);
+          worker.attackTo(closestEnemy.x, closestEnemy.y);
         }
       }
     }
@@ -1287,11 +1334,11 @@ class Settings{
   static minimumArmySize: number = 3;
   static attackArmySize:number= 10;
   static upgradeRatio:number = 1; // Should be 5.
-  static attackedDamageThreshold: number = 1;
+  static attackedDamageThreshold: number = 15;
   static maxMineDistance: number = 15;
   static maxWorkersPerGoldmine:number = 10;
   static baseSpacing: number = 2;
-  static watchtowersPerCastle: number = 0; // Should be 1.
+  static watchtowersPerCastle: number = 1; // Should be 1.
   static supplyBuffer: number = 6;
   static workerDefenceDistance: number = 5;
   static workerAttackRatio: number = 2;
