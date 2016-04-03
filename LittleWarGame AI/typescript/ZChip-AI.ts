@@ -7,7 +7,7 @@ enum ConstructionCommanderAction{
   BuildWatchtower,
   BuildForge,
   BuildBarracks,
-  UpgradeAttack,
+  BarracksUpgrades,
   TrainWorker,
   TrainFighters
 }
@@ -520,7 +520,7 @@ class ConstructionCommander extends CommanderBase{
 			}
 		}
 
-		if(repairingWorkers.length == 0){
+		if(repairingWorkers.length == 0 && availibleWorkers.length > 0){
 			for(let i:number = 0; i < this._cache.completeBuildings.length; i++){
 				let building = this._cache.completeBuildings[i];
 
@@ -597,9 +597,6 @@ class ConstructionCommander extends CommanderBase{
           return false;
         }
 
-        console.log(i, j);
-        console.log(this._lastBuildSite);
-
         // If we try to build in the same spot twice in a row, something has gone wrong and we probably can't actually build there.
         if(this._lastBuildSite != null && i == this._lastBuildSite.x && j == this._lastBuildSite.y){
           let alreadyInBlacklist = false;
@@ -618,7 +615,6 @@ class ConstructionCommander extends CommanderBase{
           }
         }
 
-        console.log(this._blacklistedBuildSites);
         for(let k = 0; k < this._blacklistedBuildSites.length; k++){
           let blacklistedSite = this._blacklistedBuildSites[k];
 
@@ -747,7 +743,6 @@ class ConstructionCommander extends CommanderBase{
     }
 
     this._lastBuildSite = buildPosition;
-    console.log("building at " + this._lastBuildSite.x + "," + this._lastBuildSite.y + "(" + buildPosition.x + "," + buildPosition.y + ")");
     closestWorker.build(type, buildPosition.x, buildPosition.y);
     return true;
   }
@@ -783,9 +778,9 @@ class ConstructionCommander extends CommanderBase{
   }
 
   // Executes the build orders as determined by the priority.
-  executeBuildOrders(priority: ConstructionCommanderAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedArmyUnit: ZChipAPI.UnitType){
+  executeBuildOrders(priority: ConstructionCommanderAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedArmyUnit: ZChipAPI.UnitType, prefferedUpgrade: ZChipAPI.UpgradeType){
     var buildingInProgress = false;
-    if(this._cache.buildings.length + this.getPendingBuildOrders().length > this._cache.completeBuildings.length){
+    if(this.getPendingBuildOrders().length > 0){
       buildingInProgress = true;
     }
 
@@ -860,12 +855,12 @@ class ConstructionCommander extends CommanderBase{
             }
           }
           break;
-        case ConstructionCommanderAction.UpgradeAttack:
+        case ConstructionCommanderAction.BarracksUpgrades:
           for(let i = 0; i < this._cache.forges.length; i++){
             let forge = <ZChipAPI.ProductionBuilding>this._cache.forges[i];
 
             if(!forge.isBusy){
-              forge.researchUpgrade(ZChipAPI.UpgradeType.AttackUpgrades);
+              forge.researchUpgrade(prefferedUpgrade);
             }
           }
         break;
@@ -902,11 +897,12 @@ class ConstructionCommander extends CommanderBase{
     }
 
     let damageUpgradeLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades);
+    let armourUpgradLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades);
     // TODO: 5 is a magic number. Baaad.
-    if(this._cache.forges.length > 0 && damageUpgradeLevel < 5 && this._cache.army.length / upgradeRatio > damageUpgradeLevel){
-      priorityQueue.push(ConstructionCommanderAction.UpgradeAttack);
+    if(this._cache.forges.length > 0 && damageUpgradeLevel < 5 && armourUpgradLevel < 5 && this._cache.army.length / upgradeRatio > damageUpgradeLevel){
+      priorityQueue.push(ConstructionCommanderAction.BarracksUpgrades);
 
-      let upgradeCost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.AttackUpgrades, ZChipAPI.TypeField.Cost) + (damageUpgradeLevel * 60);
+      let upgradeCost = Math.max(this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.AttackUpgrades, ZChipAPI.TypeField.Cost)) + ((damageUpgradeLevel + armourUpgradLevel) * 60);
       if(this.getUpgradesInProgress().length < this._cache.forges.length && this._scope.currentGold < upgradeCost){
         return priorityQueue;
       }
@@ -989,6 +985,15 @@ class CombatCommander extends CommanderBase{
 
 
     return this._cache.mines;
+  }
+
+  get prefferedUpgrade(): ZChipAPI.UpgradeType{
+    if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades) > this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades)){
+      return ZChipAPI.UpgradeType.ArmourUpgrades;
+    }
+    else{
+      return ZChipAPI.UpgradeType.AttackUpgrades;
+    }
   }
 
   // Gets the type of unit the army needs most right now.
@@ -1201,15 +1206,15 @@ class CombatCommander extends CommanderBase{
 
   // Issues individual micro commands.
   private issueMicroOrders(): void{
-    //var combatArchers = this.excludeScoutFromUnits(this._cache.archers);
+    var combatArchers = this.excludeScoutFromUnits(this._cache.archers);
 
     //var archerCenter = this._scope.getCenterOfUnits(combatArchers);
     //var enemies = this._cache.enemyArmy;
     //var mostCentralEnemy = this._scope.getClosest(archerCenter.x, archerCenter.y, enemies);
 
     //this.setFocusFireBehaviour(combatArchers, mostCentralEnemy);
-    //this.setBehaviourVulture(combatArchers);
-    //this.setBehaviourCoward(combatArchers);
+    this.setBehaviourVulture(combatArchers);
+    this.setBehaviourCoward(combatArchers);
   }
 
   // Issues all combat orders to units.
@@ -1238,8 +1243,8 @@ class CombatCommander extends CommanderBase{
         var worker: ZChipAPI.Worker = workers[i];
         var closestEnemy: ZChipAPI.Unit = <ZChipAPI.Unit>this._scope.getClosestByGround(worker.x, worker.y, enemies)
         var distanceToTarget: number = this._scope.getGroundDistance(worker.x, worker.y, closestEnemy.x, closestEnemy.y)
-        if(distanceToTarget != null && distanceToTarget > Settings.workerDefenceDistance){
-          worker.attackTo(closestEnemy.x, closestEnemy.y);
+        if(distanceToTarget != null && distanceToTarget < Settings.workerDefenceDistance){
+          worker.attack(closestEnemy);
         }
       }
     }
@@ -1293,7 +1298,7 @@ class GrandCommander extends CommanderBase{
 
     // Build Orders.
     var constructionPriority: ConstructionCommanderAction[] = this.constructionCommander.establishBuildPriority(expansionTarget, this.economyCommander.targetWorkerCount, this.combatCommander.upgradeRatio);
-    this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedArmyUnit);
+    this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedArmyUnit, this.combatCommander.prefferedUpgrade);
     this.constructionCommander.rebuildAndRepair();
 
     // Combat Orders.
@@ -1333,15 +1338,15 @@ class GrandCommander extends CommanderBase{
 class Settings{
   static minimumArmySize: number = 3;
   static attackArmySize:number= 10;
-  static upgradeRatio:number = 1; // Should be 5.
+  static upgradeRatio:number = 3; // Should be 5.
   static attackedDamageThreshold: number = 15;
   static maxMineDistance: number = 15;
   static maxWorkersPerGoldmine:number = 10;
   static baseSpacing: number = 2;
-  static watchtowersPerCastle: number = 1; // Should be 1.
+  static watchtowersPerCastle: number = 0;
   static supplyBuffer: number = 6;
-  static workerDefenceDistance: number = 5;
-  static workerAttackRatio: number = 2;
+  static workerDefenceDistance: number = 15;
+  static workerAttackRatio: number = 1.5;
   static checkMineForBaseDistance: number = 4;
   static maxActiveMines: number = 3;
   static desiredActiveMines: number = 2;
