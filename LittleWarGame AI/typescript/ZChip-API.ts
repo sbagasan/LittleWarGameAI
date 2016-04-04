@@ -140,8 +140,8 @@ module ZChipAPI{
           return BuildingType.Watchtower;
         case "Watchtower (detection)":
           return BuildingType.WatchtowerDetection;
-        case "Wherewolves Den":
-          return BuildingType.WherewolvesDen;
+        case "werewolves Den":
+          return BuildingType.werewolvesDen;
         case "Wolves Den":
           return BuildingType.WolvesDen;
         case "Workshop":
@@ -283,8 +283,8 @@ module ZChipAPI{
           return "Watchtower";
         case BuildingType.WatchtowerDetection:
           return "Watchtower (detection)";
-        case BuildingType.WherewolvesDen:
-          return "Wherewolves Den";
+        case BuildingType.werewolvesDen:
+          return "werewolves Den";
         case BuildingType.WolvesDen:
           return "WolvesDen";
         case BuildingType.Workshop:
@@ -632,7 +632,7 @@ module ZChipAPI{
     Mine,
     Watchtower,
     WatchtowerDetection,
-    WherewolvesDen,
+    werewolvesDen,
     WolvesDen,
     Workshop
   }
