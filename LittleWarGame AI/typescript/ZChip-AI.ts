@@ -601,7 +601,7 @@ class ConstructionCommander extends CommanderBase{
         if(this._lastBuildSite != null && i == this._lastBuildSite.x && j == this._lastBuildSite.y){
           let alreadyInBlacklist = false;
 
-          for(let k = 0; j < this._blacklistedBuildSites.length; k++){
+          for(let k = 0; k < this._blacklistedBuildSites.length; k++){
             let blacklistedSite = this._blacklistedBuildSites[k];
 
             if(blacklistedSite.x == this._lastBuildSite.x && blacklistedSite.y == this._lastBuildSite.y){
@@ -675,7 +675,7 @@ class ConstructionCommander extends CommanderBase{
       Math.floor(goldmine.y + (goldmine.size / 2)),
       (function(self:ConstructionCommander, base: ZChipAPI.Building):(x:number, y:number) => boolean {
         return function(x:number, y:number):boolean{
-          let canPlace = self.canPlaceBuilding(ZChipAPI.BuildingType.Castle, x, y, 1);
+          let canPlace = self.canPlaceBuilding(ZChipAPI.BuildingType.Castle, x, y, 0);
           if(!canPlace){
             return false;
           }
@@ -1338,7 +1338,7 @@ class GrandCommander extends CommanderBase{
 class Settings{
   static minimumArmySize: number = 3;
   static attackArmySize:number= 10;
-  static upgradeRatio:number = 3; // Should be 5.
+  static upgradeRatio:number = 3;
   static attackedDamageThreshold: number = 15;
   static maxMineDistance: number = 15;
   static maxWorkersPerGoldmine:number = 10;
