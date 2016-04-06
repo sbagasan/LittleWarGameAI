@@ -974,7 +974,7 @@ class CombatCommander extends CommanderBase{
       for(let i: number = 0; i < players.length; i++){
         var player = players[i];
         var location = this._scope.getStartPosition(players[i]);
-        if(player != this._scope.playerNumber){
+        if(location != null && player != this._scope.playerNumber){
           var startingMine = this._scope.getClosestByGround(location.x, location.y, this._cache.mines);
           scoutOrder.push(startingMine);
         }
