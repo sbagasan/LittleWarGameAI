@@ -7,9 +7,11 @@ enum ConstructionCommanderAction{
   BuildWatchtower,
   BuildForge,
   BuildBarracks,
+  BuildWolfDen,
   BarracksUpgrades,
   TrainWorker,
-  TrainFighters
+  TrainFighters,
+  TrainWolves,
 }
 
 // Provides access to cached copies of scope data.
@@ -25,6 +27,16 @@ class Cache{
 
     return this._idleWorkers;
   };
+
+  // Gets a list of the player's wolves.
+  private _wolves: ZChipAPI.Unit[];
+  get wolves(): ZChipAPI.Unit[]{
+    if(this._wolves == null){
+      this._wolves = this._scope.getUnits({type: ZChipAPI.UnitType.Wolf, player: this._scope.playerNumber});
+    }
+
+    return this._wolves;
+  }
 
   // Gets a list of the player's mining workers.
   private _miningWorkers: ZChipAPI.Unit[];
@@ -160,6 +172,16 @@ class Cache{
     return this._barracks;
   };
 
+  // Gets a list of the player's wolf dens.
+  private _wolfDens: ZChipAPI.ProductionBuilding[];
+  get wolfDens(): ZChipAPI.ProductionBuilding[]{
+    if(this._wolfDens == null){
+      this._wolfDens = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.WolvesDen});
+    }
+
+    return this._wolfDens;
+  };
+
   // Gets a list of the player's forges.
   private _forges: ZChipAPI.ProductionBuilding[];
   get forges(): ZChipAPI.ProductionBuilding[]{
@@ -285,22 +307,23 @@ class EconomyCommander extends CommanderBase{
   // This caches the distance between buildings.
   private _cachedBuildingDistances: number[][];
 
-  // The minimum number of workers for each mine that we should have before we consider letting other commanders use them.
-  private _minimumWorkersPerMine: number;
+  // The minimum number of workers that we should have before we consider using them for non essential tasks.
+  private _minimumWorkers: number;
 
-  constructor(maxMineDistance: number, maxWorkersPerGoldmine: number, maxActiveMines: number, desiredActiveMines: number, minimumWorkersPerMine: number){
+  constructor(maxMineDistance: number, maxWorkersPerGoldmine: number, maxActiveMines: number, desiredActiveMines: number, minimumWorkers: number){
     super();
 
     this._maxMineDistance = maxMineDistance;
     this._maxWorkersPerGoldmine = maxWorkersPerGoldmine;
     this._maxActiveMines = maxActiveMines;
     this._desiredActiveMines = desiredActiveMines;
+    this._minimumWorkers = minimumWorkers;
     this._cachedBuildingDistances = [];
   }
 
-  // Gets the number of workers that are available for other commanders to use.
+  // Gets the number of workers that are available for non essential tasks.
   get disposableWorkers():number{
-    let minimumDesiredWorkers = this._minimumWorkersPerMine * this.activeMines.length;
+    let minimumDesiredWorkers = this._minimumWorkers;
     return this._cache.workers.length - minimumDesiredWorkers;
   }
 
@@ -521,11 +544,18 @@ class ConstructionCommander extends CommanderBase{
         return ZChipAPI.BuildingType.House;
       case ConstructionCommanderAction.BuildWatchtower:
         return ZChipAPI.BuildingType.Watchtower;
+      case ConstructionCommanderAction.BuildWolfDen:
+        return ZChipAPI.BuildingType.WolvesDen;
     }
   }
 
   // Repair dammaged buildings or finishes buildings that were left incomplete.
-  rebuildAndRepair(){
+  rebuildAndRepair(disposableWorkers: number){
+    // Don't pull workers away from their other duties uness we can spare them.
+    if(disposableWorkers < 1){
+      return;
+    }
+
     var repairingWorkers: ZChipAPI.Worker[] = < ZChipAPI.Worker[]>this._scope.getUnits({type: ZChipAPI.UnitType.Worker, player:this._scope.playerNumber, order: ZChipAPI.OrderType.Repair});
     var stoppedWorkers : ZChipAPI.Worker[] = < ZChipAPI.Worker[]> this._scope.getUnits({type: ZChipAPI.UnitType.Worker, player:this._scope.playerNumber, order: ZChipAPI.OrderType.Stop});
     var miningWorkers : ZChipAPI.Worker[] = < ZChipAPI.Worker[]> this._scope.getUnits({type: ZChipAPI.UnitType.Worker, player:this._scope.playerNumber, order: ZChipAPI.OrderType.Mine});
@@ -822,6 +852,7 @@ class ConstructionCommander extends CommanderBase{
             }
           }
           break;
+        case ConstructionCommanderAction.BuildWolfDen:
         case ConstructionCommanderAction.BuildHouse:
         case ConstructionCommanderAction.BuildWatchtower:
         case ConstructionCommanderAction.BuildForge:
@@ -853,6 +884,15 @@ class ConstructionCommander extends CommanderBase{
             }
           }
           break;
+        case ConstructionCommanderAction.TrainWolves:
+          for(let i = 0; i < this._cache.wolfDens.length; i++){
+            let singleDen = this._cache.wolfDens[i];
+
+            if(!singleDen.isBusy){
+              singleDen.trainUnit(ZChipAPI.UnitType.Wolf);
+            }
+          }
+          break;
         case ConstructionCommanderAction.BarracksUpgrades:
           for(let i = 0; i < this._cache.forges.length; i++){
             let forge = <ZChipAPI.ProductionBuilding>this._cache.forges[i];
@@ -870,12 +910,20 @@ class ConstructionCommander extends CommanderBase{
     var priorityQueue: ConstructionCommanderAction[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
 
+    // Wolf Code Test.
+    if(this._cache.houses.length > 0 && this._cache.wolfDens.length < 1){
+      priorityQueue.push(ConstructionCommanderAction.BuildWolfDen);
+    }
+    if(this._cache.wolfDens.length > 0){
+      priorityQueue.push(ConstructionCommanderAction.TrainWolves);
+    }
+
     if(expansionTarget != null && workersAvailable){
       priorityQueue.push(ConstructionCommanderAction.Expand);
       return priorityQueue;
     }
 
-    if(this._scope.currentSupply + this._supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply < this._scope.supplyCap && workersAvailable){
+    if(this._scope.currentSupply + this._supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply < this._scope.supplyCap){
       priorityQueue.push(ConstructionCommanderAction.BuildHouse);
     }
 
@@ -1299,7 +1347,7 @@ class GrandCommander extends CommanderBase{
     // Build Orders.
     var constructionPriority: ConstructionCommanderAction[] = this.constructionCommander.establishBuildPriority(expansionTarget, this.economyCommander.targetWorkerCount, this.combatCommander.upgradeRatio, this.economyCommander.disposableWorkers);
     this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedArmyUnit, this.combatCommander.prefferedUpgrade);
-    this.constructionCommander.rebuildAndRepair();
+    this.constructionCommander.rebuildAndRepair(this.economyCommander.disposableWorkers);
 
     // Combat Orders.
     this.combatCommander.executeCombatOrders(expansionTarget, primaryBase);
@@ -1329,7 +1377,7 @@ class GrandCommander extends CommanderBase{
   constructor(){
     super();
     this.combatCommander = new CombatCommander(Settings.minimumArmySize, Settings.attackArmySize, Settings.upgradeRatio, Settings.attackedDamageThreshold, Settings.checkMineForBaseDistance);
-    this.economyCommander = new EconomyCommander(Settings.maxMineDistance, Settings.maxWorkersPerGoldmine, Settings.maxActiveMines, Settings.desiredActiveMines, Settings.minimumWorkersPerMine);
+    this.economyCommander = new EconomyCommander(Settings.maxMineDistance, Settings.maxWorkersPerGoldmine, Settings.maxActiveMines, Settings.desiredActiveMines, Settings.minimumWorkers);
     this.constructionCommander =  new  ConstructionCommander(Settings.baseSpacing, Settings.watchtowersPerCastle, Settings.supplyBuffer, Settings.maxMineDistance);
   }
 }
@@ -1350,5 +1398,5 @@ class Settings{
   static checkMineForBaseDistance: number = 4;
   static maxActiveMines: number = 3;
   static desiredActiveMines: number = 2;
-  static minimumWorkersPerMine: number = 5;
+  static minimumWorkers: number = 5;
 }

@@ -8,9 +8,18 @@ module ZChipAPI{
       switch(type){
         case BuildingType.Mine:
           return new Mine(unit, scope);
-        case BuildingType.Castle:
-        case BuildingType.Forge:
+        case BuildingType.AdvancedWorkshop:
+        case BuildingType.AnimalTestingLab:
         case BuildingType.Barracks:
+        case BuildingType.Castle:
+        case BuildingType.Church:
+        case BuildingType.DragonsLair:
+        case BuildingType.Forge:
+        case BuildingType.Fortress:
+        case BuildingType.MagesGuild:
+        case BuildingType.werewolvesDen:
+        case BuildingType.WolvesDen:
+        case BuildingType.Workshop:
           return new ProductionBuilding(unit, scope);
         default:
           return new Building(unit, scope);
@@ -286,7 +295,7 @@ module ZChipAPI{
         case BuildingType.werewolvesDen:
           return "werewolves Den";
         case BuildingType.WolvesDen:
-          return "WolvesDen";
+          return "Wolves Den";
         case BuildingType.Workshop:
           return "Workshop";
         default:
