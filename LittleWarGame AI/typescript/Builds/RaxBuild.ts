@@ -87,7 +87,12 @@ class RaxBuild implements ZChipAI.IBuild{
       }
     }
 
-    priorityQueue.push(ZChipAI.BuildAction.TrainFighters);
+    if(this._cache.archers.length < this._cache.soldiers.length){
+      priorityQueue.push(ZChipAI.BuildAction.TrainArcher);
+    }
+    else{
+      priorityQueue.push(ZChipAI.BuildAction.TrainSoldier);
+    }
 
     if(workersAvailable){
       priorityQueue.push(ZChipAI.BuildAction.BuildBarracks);

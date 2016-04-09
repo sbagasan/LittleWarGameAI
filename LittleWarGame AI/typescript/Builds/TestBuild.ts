@@ -50,7 +50,7 @@ class TestBuild implements ZChipAI.IBuild{
     var priorityQueue: ZChipAI.BuildAction[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
 
-    if(this._cache.houses.length < 1){
+    if(this._cache.houses.length < 4){
       priorityQueue.push(ZChipAI.BuildAction.BuildHouse);
     }
 
@@ -88,6 +88,42 @@ class TestBuild implements ZChipAI.IBuild{
 
     if(this._cache.watchtowers.length < 1){
       priorityQueue.push(ZChipAI.BuildAction.BuildWatchtower);
+    }
+
+    if(this._cache.mages.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainMage)
+    }
+
+    if(this._cache.wolves.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainWolves)
+    }
+
+    if(this._cache.workers.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainWorker)
+    }
+
+    if(this._cache.soldiers.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainSoldier)
+    }
+
+    if(this._cache.archers.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainArcher)
+    }
+
+    if(this._cache.priests.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainPriest)
+    }
+
+    if(this._cache.birds.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainBird)
+    }
+
+    if(this._cache.catapults.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainCatapult)
+    }
+
+    if(this._cache.ballistae.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainBallista)
     }
 
     return priorityQueue;

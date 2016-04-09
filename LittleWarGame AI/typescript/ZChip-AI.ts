@@ -17,8 +17,14 @@ module ZChipAI {
     BuildWolfDen,
     BarracksUpgrades,
     TrainWorker,
-    TrainFighters,
+    TrainSoldier,
+    TrainArcher,
     TrainWolves,
+    TrainMage,
+    TrainPriest,
+    TrainBallista,
+    TrainBird,
+    TrainCatapult
   }
 
   // Provides access to cached copies of scope data.
@@ -105,6 +111,56 @@ module ZChipAI {
       return this._archers;
     };
 
+    // Gets a list of the player's mages.
+    private _mages: ZChipAPI.Unit[];
+    get mages(): ZChipAPI.Unit[]{
+      if(this._mages == null){
+        this._mages = this._scope.getUnits({type: ZChipAPI.UnitType.Mage, player: this._scope.playerNumber});
+      }
+
+      return this._mages;
+    };
+
+    // Gets a list of the player's priests.
+    private _priests: ZChipAPI.Unit[];
+    get priests(): ZChipAPI.Unit[]{
+      if(this._priests == null){
+        this._priests = this._scope.getUnits({type: ZChipAPI.UnitType.Priest, player: this._scope.playerNumber});
+      }
+
+      return this._priests;
+    };
+
+    // Gets a list of the player's birds.
+    private _birds: ZChipAPI.Unit[];
+    get birds(): ZChipAPI.Unit[]{
+      if(this._birds == null){
+        this._birds = this._scope.getUnits({type: ZChipAPI.UnitType.Bird, player: this._scope.playerNumber});
+      }
+
+      return this._birds;
+    };
+
+    // Gets a list of the player's catapults.
+    private _catapults: ZChipAPI.Unit[];
+    get catapults(): ZChipAPI.Unit[]{
+      if(this._catapults == null){
+        this._catapults = this._scope.getUnits({type: ZChipAPI.UnitType.Catapult, player: this._scope.playerNumber});
+      }
+
+      return this._catapults;
+    };
+
+    // Gets a list of the player's ballistae.
+    private _ballistae: ZChipAPI.Unit[];
+    get ballistae(): ZChipAPI.Unit[]{
+      if(this._ballistae == null){
+        this._ballistae = this._scope.getUnits({type: ZChipAPI.UnitType.Ballista, player: this._scope.playerNumber});
+      }
+
+      return this._ballistae;
+    };
+
     // Gets a list of the player's army units.
     private _army: ZChipAPI.Unit[];
     get army(): ZChipAPI.Unit[]{
@@ -144,6 +200,24 @@ module ZChipAI {
 
       return this._completeBuildings;
     };
+
+    private _unitProductionBuildings: ZChipAPI.ProductionBuilding[];
+    get unitProductionBuildings():ZChipAPI.ProductionBuilding[]{
+      if(this._unitProductionBuildings == null){
+        this._unitProductionBuildings = [];
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.castles);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.barracks);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.magesGuilds);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.workshops);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.advancedWorksops);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.churches);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.dragonLairs);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.wolfDens);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.workshops);
+      }
+
+      return this._unitProductionBuildings;
+    }
 
     // Gets a list of the player's castles.
     private _castles: ZChipAPI.ProductionBuilding[];
@@ -628,6 +702,29 @@ module ZChipAI {
       }
     }
 
+    private static getUnitTypeFromAction(action: BuildAction): ZChipAPI.UnitType{
+      switch(action){
+        case BuildAction.TrainMage:
+          return ZChipAPI.UnitType.Mage;
+        case BuildAction.TrainBird:
+          return ZChipAPI.UnitType.Bird;
+        case BuildAction.TrainWorker:
+          return ZChipAPI.UnitType.Worker;
+        case BuildAction.TrainWolves:
+          return ZChipAPI.UnitType.Wolf;
+        case BuildAction.TrainPriest:
+          return ZChipAPI.UnitType.Priest;
+        case BuildAction.TrainSoldier:
+          return ZChipAPI.UnitType.Soldier;
+        case BuildAction.TrainArcher:
+          return ZChipAPI.UnitType.Archer;
+        case BuildAction.TrainBallista:
+          return ZChipAPI.UnitType.Ballista;
+        case BuildAction.TrainCatapult:
+          return ZChipAPI.UnitType.Catapult;
+      }
+    }
+
     // Repair dammaged buildings or finishes buildings that were left incomplete.
     rebuildAndRepair(disposableWorkers: number){
       // Don't pull workers away from their other duties uness we can spare them.
@@ -911,7 +1008,7 @@ module ZChipAI {
     }
 
     // Executes the build orders as determined by the priority.
-    executeBuildOrders(priority: BuildAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedArmyUnit: ZChipAPI.UnitType, prefferedUpgrade: ZChipAPI.UpgradeType){
+    executeBuildOrders(priority: BuildAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedUpgrade: ZChipAPI.UpgradeType){
       var buildingInProgress = false;
       if(this.getPendingBuildOrders().length > 0){
         buildingInProgress = true;
@@ -952,32 +1049,22 @@ module ZChipAI {
             }
             break;
           case BuildAction.TrainWorker:
-              for(let i = 0; i < this._cache.castles.length; i++){
-                let castle: ZChipAPI.ProductionBuilding = this._cache.castles[i];
+          case BuildAction.TrainSoldier:
+          case BuildAction.TrainArcher:
+          case BuildAction.TrainWolves:
+          case BuildAction.TrainMage:
+          case BuildAction.TrainPriest:
+          case BuildAction.TrainBird:
+          case BuildAction.TrainCatapult:
+          case BuildAction.TrainBallista:
+              for(let i = 0; i < this._cache.unitProductionBuildings.length; i++){
+                let productionBuilding: ZChipAPI.ProductionBuilding = this._cache.unitProductionBuildings[i];
 
-                if(!castle.isBusy){
-                  castle.trainUnit(ZChipAPI.UnitType.Worker);
+                if(!productionBuilding.isBusy){
+                  productionBuilding.trainUnit(ConstructionCommander.getUnitTypeFromAction(workOrder));
                 }
               }
               break;
-          case BuildAction.TrainFighters:
-            for(let i = 0; i < this._cache.barracks.length; i++){
-              let singleBarracks = this._cache.barracks[i];
-
-              if(!singleBarracks.isBusy){
-                singleBarracks.trainUnit(prefferedArmyUnit);
-              }
-            }
-            break;
-          case BuildAction.TrainWolves:
-            for(let i = 0; i < this._cache.wolfDens.length; i++){
-              let singleDen = this._cache.wolfDens[i];
-
-              if(!singleDen.isBusy){
-                singleDen.trainUnit(ZChipAPI.UnitType.Wolf);
-              }
-            }
-            break;
           case BuildAction.BarracksUpgrades:
             for(let i = 0; i < this._cache.forges.length; i++){
               let forge = <ZChipAPI.ProductionBuilding>this._cache.forges[i];
@@ -1074,16 +1161,6 @@ module ZChipAI {
       }
       else{
         return ZChipAPI.UpgradeType.AttackUpgrades;
-      }
-    }
-
-    // Gets the type of unit the army needs most right now.
-    get prefferedArmyUnit(): ZChipAPI.UnitType{
-      if(this._cache.soldiers.length > this._cache.archers.length){
-        return ZChipAPI.UnitType.Archer;
-      }
-      else{
-        return ZChipAPI.UnitType.Soldier;
       }
     }
 
@@ -1389,7 +1466,7 @@ module ZChipAI {
 
       // Build Orders.
       var constructionPriority: BuildAction[] = this.build.establishBuildPriority(expansionTarget, this.economyCommander.targetWorkerCount, this.economyCommander.disposableWorkers, this.constructionCommander.getUpgradesInProgress());
-      this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedArmyUnit, this.combatCommander.prefferedUpgrade);
+      this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedUpgrade);
       this.constructionCommander.rebuildAndRepair(this.economyCommander.disposableWorkers);
 
       // Combat Orders.
