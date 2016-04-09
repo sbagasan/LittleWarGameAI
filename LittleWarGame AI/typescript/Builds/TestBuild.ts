@@ -50,26 +50,44 @@ class TestBuild implements ZChipAI.IBuild{
     var priorityQueue: ZChipAI.BuildAction[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
 
-    if(expansionTarget != null && workersAvailable){
-      priorityQueue.push(ZChipAI.BuildAction.Expand);
-      return priorityQueue;
-    }
-
-    if(this._scope.currentSupply + this.supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply < this._scope.supplyCap){
+    if(this._cache.houses.length < 1){
       priorityQueue.push(ZChipAI.BuildAction.BuildHouse);
-      return priorityQueue;
     }
 
-    if(this._cache.workers.length < desiredWorkers){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWorker);
+    if(this._cache.barracks.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildBarracks);
     }
 
-    if(this._cache.wolfDens.length > 0){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWolves);
+    if(this._cache.magesGuilds.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildMagesGuild);
     }
 
-    if(this._cache.houses.length > 0 && workersAvailable){
+    if(this._cache.workshops.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildWorkshop);
+    }
+
+    if(this._cache.advancedWorksops.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildAdvancedWorkshop);
+    }
+
+    if(this._cache.churches.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildChurch);
+    }
+
+    if(this._cache.animalTestingLabs.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildAnimalTestingLab);
+    }
+
+    if(this._cache.wolfDens.length < 1){
       priorityQueue.push(ZChipAI.BuildAction.BuildWolfDen);
+    }
+
+    if(this._cache.forges.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildForge);
+    }
+
+    if(this._cache.watchtowers.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildWatchtower);
     }
 
     return priorityQueue;

@@ -179,6 +179,66 @@ module ZChipAI {
       return this._barracks;
     };
 
+    // Gets a list of the player's barracks.
+    private _magesGuilds: ZChipAPI.ProductionBuilding[];
+    get magesGuilds(): ZChipAPI.ProductionBuilding[]{
+      if(this._magesGuilds == null){
+        this._magesGuilds = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.MagesGuild});
+      }
+
+      return this._magesGuilds;
+    };
+
+    // Gets a list of the player's barracks.
+    private _workshops: ZChipAPI.ProductionBuilding[];
+    get workshops(): ZChipAPI.ProductionBuilding[]{
+      if(this._workshops == null){
+        this._workshops = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.Workshop});
+      }
+
+      return this._workshops;
+    };
+
+    // Gets a list of the player's barracks.
+    private _advancedWorkshops: ZChipAPI.ProductionBuilding[];
+    get advancedWorksops(): ZChipAPI.ProductionBuilding[]{
+      if(this._advancedWorkshops == null){
+        this._advancedWorkshops = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.AdvancedWorkshop});
+      }
+
+      return this._advancedWorkshops;
+    };
+
+    // Gets a list of the player's barracks.
+    private _churches: ZChipAPI.ProductionBuilding[];
+    get churches(): ZChipAPI.ProductionBuilding[]{
+      if(this._churches == null){
+        this._churches = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.Church});
+      }
+
+      return this._churches;
+    };
+
+    // Gets a list of the player's barracks.
+    private _animalTestingLabs: ZChipAPI.ProductionBuilding[];
+    get animalTestingLabs(): ZChipAPI.ProductionBuilding[]{
+      if(this._animalTestingLabs == null){
+        this._animalTestingLabs = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.AnimalTestingLab});
+      }
+
+      return this._animalTestingLabs;
+    };
+
+    // Gets a list of the player's barracks.
+    private _dragonLairs: ZChipAPI.ProductionBuilding[];
+    get dragonLairs(): ZChipAPI.ProductionBuilding[]{
+      if(this._dragonLairs == null){
+        this._dragonLairs = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.DragonsLair});
+      }
+
+      return this._dragonLairs;
+    };
+
     // Gets a list of the player's wolf dens.
     private _wolfDens: ZChipAPI.ProductionBuilding[];
     get wolfDens(): ZChipAPI.ProductionBuilding[]{
@@ -563,6 +623,8 @@ module ZChipAI {
           return ZChipAPI.BuildingType.Watchtower;
         case BuildAction.BuildWolfDen:
           return ZChipAPI.BuildingType.WolvesDen;
+        case BuildAction.BuildWorkshop:
+          return ZChipAPI.BuildingType.Workshop;
       }
     }
 
