@@ -1,7 +1,6 @@
 ///<reference path="./LWG-API.ts" />
 ///<reference path="./Common.ts" />
 module ZChipAPI{
-
   class BuildingFactory{
     static createBuilding(unit: LWG.IUnit, scope: Scope):Building{
       var type: BuildingType = TypeMapper.getBuildingType(unit.getTypeName());
@@ -116,7 +115,7 @@ module ZChipAPI{
         case "Damage":
           return "upgattack";
         default:
-          return typeName.toLowerCase();
+          return typeName.toLowerCase().replace(" ","");
       }
     }
 

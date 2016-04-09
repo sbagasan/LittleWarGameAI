@@ -1,17 +1,17 @@
 if(this.init == undefined){
   this.init = true;
   // Paste compiled javascript here.
-  this.grandCommander = new GrandCommander();
+  this.grandCommander = new ZChipAI.GrandCommander(new TestBuild());
   this.cycle = function(scope){
     var superScope = new ZChipAPI.Scope(scope);
-    var cache = new Cache(superScope);
+    var cache = new ZChipAI.Cache(superScope);
 
     this.grandCommander.setScope(superScope, cache);
     this.grandCommander.executeOrders();
   }
 
   var superScope = new ZChipAPI.Scope(scope);
-  var cache = new Cache(superScope);
+  var cache = new ZChipAI.Cache(superScope);
 
   this.grandCommander.setScope(superScope, cache);
 
