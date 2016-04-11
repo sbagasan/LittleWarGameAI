@@ -114,6 +114,8 @@ module ZChipAPI{
           return "upgarmor";
         case "Damage":
           return "upgattack";
+        case "Research Fireball":
+          return "upgfireball";
         default:
           return typeName.toLowerCase().replace(" ","");
       }
@@ -412,6 +414,8 @@ module ZChipAPI{
           return OrderType.MoveTo;
         case "Repair":
           return OrderType.Repair;
+        case "Research Fireball":
+          return OrderType.ResearchFireball;
         case "Stop":
           return OrderType.Stop;
         case "Construct Airship":
@@ -451,6 +455,10 @@ module ZChipAPI{
       switch(type){
         case OrderType.UpgradeAttack:
           return UpgradeType.AttackUpgrades;
+        case OrderType.UpgradeArmour:
+          return UpgradeType.ArmourUpgrades;
+        case OrderType.ResearchFireball:
+          return UpgradeType.FireballUpgrade
         default:
           return null;
       }
@@ -462,6 +470,8 @@ module ZChipAPI{
           return OrderType.UpgradeAttack;
         case UpgradeType.ArmourUpgrades:
           return OrderType.UpgradeArmour;
+        case UpgradeType.FireballUpgrade:
+          return OrderType.ResearchFireball;
         default:
           throw "No order mapping for upgrade named: " + UpgradeType.toString();
       }
@@ -473,6 +483,8 @@ module ZChipAPI{
           return "Damage";
         case UpgradeType.ArmourUpgrades:
           return "Armor";
+        case UpgradeType.FireballUpgrade:
+          return "Research Fireball";
         default:
           throw "No mapping for upgrade type:" + UpgradeType.toString();
       }
@@ -484,6 +496,8 @@ module ZChipAPI{
           return UpgradeType.AttackUpgrades;
         case "Armor":
           return UpgradeType.ArmourUpgrades;
+        case "Research Fireball":
+          return UpgradeType.FireballUpgrade;
         default:
           return null;
       }
@@ -527,6 +541,8 @@ module ZChipAPI{
           return "Moveto";
         case OrderType.Repair:
           return "Repair";
+        case OrderType.ResearchFireball:
+          return "Research Fireball";
         case OrderType.Stop:
           return "Stop";
         case OrderType.TrainAirship:
@@ -578,7 +594,8 @@ module ZChipAPI{
 
   export enum UpgradeType{
     AttackUpgrades,
-    ArmourUpgrades
+    ArmourUpgrades,
+    FireballUpgrade
   }
 
   export enum TypeField{
@@ -608,6 +625,7 @@ module ZChipAPI{
     Move,
     MoveTo,
     Repair,
+    ResearchFireball,
     Stop,
     TrainAirship,
     TrainArcher,

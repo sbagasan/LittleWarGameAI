@@ -16,6 +16,7 @@ module ZChipAI {
     BuildWorkshop,
     BuildWolfDen,
     BarracksUpgrades,
+    ResearchFireball,
     TrainWorker,
     TrainSoldier,
     TrainArcher,
@@ -1065,6 +1066,15 @@ module ZChipAI {
                 }
               }
               break;
+          case BuildAction.ResearchFireball:
+            for(let i = 0; i < this._cache.magesGuilds.length; i++){
+              let guild = <ZChipAPI.ProductionBuilding>this._cache.magesGuilds[i];
+
+              if(!guild.isBusy){
+                guild.researchUpgrade(ZChipAPI.UpgradeType.FireballUpgrade);
+              }
+            }
+            break;
           case BuildAction.BarracksUpgrades:
             for(let i = 0; i < this._cache.forges.length; i++){
               let forge = <ZChipAPI.ProductionBuilding>this._cache.forges[i];

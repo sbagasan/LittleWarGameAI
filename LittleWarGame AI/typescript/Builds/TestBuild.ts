@@ -90,6 +90,10 @@ class TestBuild implements ZChipAI.IBuild{
       priorityQueue.push(ZChipAI.BuildAction.BuildWatchtower);
     }
 
+    if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.FireballUpgrade) < 1){
+      priorityQueue.push(ZChipAI.BuildAction.ResearchFireball);
+    }
+
     if(this._cache.mages.length < 1){
       priorityQueue.push(ZChipAI.BuildAction.TrainMage)
     }
