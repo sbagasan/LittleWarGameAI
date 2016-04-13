@@ -94,40 +94,48 @@ class TestBuild implements ZChipAI.IBuild{
       priorityQueue.push(ZChipAI.BuildAction.ResearchFireball);
     }
 
+    if(this._cache.werewolfDens.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.UpgradeWolfDen);
+    }
+
     if(this._cache.mages.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainMage)
+      priorityQueue.push(ZChipAI.BuildAction.TrainMage);
     }
 
     if(this._cache.wolves.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWolves)
+      priorityQueue.push(ZChipAI.BuildAction.TrainWolves);
     }
 
     if(this._cache.workers.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWorker)
+      priorityQueue.push(ZChipAI.BuildAction.TrainWorker);
     }
 
     if(this._cache.soldiers.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainSoldier)
+      priorityQueue.push(ZChipAI.BuildAction.TrainSoldier);
     }
 
     if(this._cache.archers.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainArcher)
+      priorityQueue.push(ZChipAI.BuildAction.TrainArcher);
     }
 
     if(this._cache.priests.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainPriest)
+      priorityQueue.push(ZChipAI.BuildAction.TrainPriest);
     }
 
     if(this._cache.birds.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainBird)
+      priorityQueue.push(ZChipAI.BuildAction.TrainBird);
     }
 
     if(this._cache.catapults.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainCatapult)
+      priorityQueue.push(ZChipAI.BuildAction.TrainCatapult);
     }
 
     if(this._cache.ballistae.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainBallista)
+      priorityQueue.push(ZChipAI.BuildAction.TrainBallista);
+    }
+
+    if(this._cache.werewolves.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.TrainWerewolf);
     }
 
     return priorityQueue;

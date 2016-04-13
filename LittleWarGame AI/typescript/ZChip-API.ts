@@ -16,7 +16,7 @@ module ZChipAPI{
         case BuildingType.Forge:
         case BuildingType.Fortress:
         case BuildingType.MagesGuild:
-        case BuildingType.werewolvesDen:
+        case BuildingType.WerewolvesDen:
         case BuildingType.WolvesDen:
         case BuildingType.Workshop:
           return new ProductionBuilding(unit, scope);
@@ -150,8 +150,8 @@ module ZChipAPI{
           return BuildingType.Watchtower;
         case "Watchtower (detection)":
           return BuildingType.WatchtowerDetection;
-        case "werewolves Den":
-          return BuildingType.werewolvesDen;
+        case "Werewolves Den":
+          return BuildingType.WerewolvesDen;
         case "Wolves Den":
           return BuildingType.WolvesDen;
         case "Workshop":
@@ -293,8 +293,8 @@ module ZChipAPI{
           return "Watchtower";
         case BuildingType.WatchtowerDetection:
           return "Watchtower (detection)";
-        case BuildingType.werewolvesDen:
-          return "werewolves Den";
+        case BuildingType.WerewolvesDen:
+          return "Werewolves Den";
         case BuildingType.WolvesDen:
           return "Wolves Den";
         case BuildingType.Workshop:
@@ -416,6 +416,8 @@ module ZChipAPI{
           return OrderType.Repair;
         case "Research Fireball":
           return OrderType.ResearchFireball;
+        case "Upgrade To Werewolves Den":
+          return OrderType.UpgradeToWerewolvesDen;
         case "Stop":
           return OrderType.Stop;
         case "Construct Airship":
@@ -458,7 +460,9 @@ module ZChipAPI{
         case OrderType.UpgradeArmour:
           return UpgradeType.ArmourUpgrades;
         case OrderType.ResearchFireball:
-          return UpgradeType.FireballUpgrade
+          return UpgradeType.FireballUpgrade;
+        case OrderType.UpgradeToWerewolvesDen:
+          return UpgradeType.WerewolvesDenUpgrade;
         default:
           return null;
       }
@@ -472,6 +476,8 @@ module ZChipAPI{
           return OrderType.UpgradeArmour;
         case UpgradeType.FireballUpgrade:
           return OrderType.ResearchFireball;
+        case UpgradeType.WerewolvesDenUpgrade:
+          return OrderType.UpgradeToWerewolvesDen;
         default:
           throw "No order mapping for upgrade named: " + UpgradeType.toString();
       }
@@ -485,6 +491,8 @@ module ZChipAPI{
           return "Armor";
         case UpgradeType.FireballUpgrade:
           return "Research Fireball";
+        case UpgradeType.WerewolvesDenUpgrade:
+          return "Upgrade To Werewolves Den"
         default:
           throw "No mapping for upgrade type:" + UpgradeType.toString();
       }
@@ -498,6 +506,8 @@ module ZChipAPI{
           return UpgradeType.ArmourUpgrades;
         case "Research Fireball":
           return UpgradeType.FireballUpgrade;
+        case "Upgrade To Werewolves Den":
+          return UpgradeType.WerewolvesDenUpgrade;
         default:
           return null;
       }
@@ -543,6 +553,8 @@ module ZChipAPI{
           return "Repair";
         case OrderType.ResearchFireball:
           return "Research Fireball";
+        case OrderType.UpgradeToWerewolvesDen:
+          return "Upgrade To Werewolves Den";
         case OrderType.Stop:
           return "Stop";
         case OrderType.TrainAirship:
@@ -595,7 +607,8 @@ module ZChipAPI{
   export enum UpgradeType{
     AttackUpgrades,
     ArmourUpgrades,
-    FireballUpgrade
+    FireballUpgrade,
+    WerewolvesDenUpgrade
   }
 
   export enum TypeField{
@@ -626,6 +639,7 @@ module ZChipAPI{
     MoveTo,
     Repair,
     ResearchFireball,
+    UpgradeToWerewolvesDen,
     Stop,
     TrainAirship,
     TrainArcher,
@@ -658,7 +672,7 @@ module ZChipAPI{
     Mine,
     Watchtower,
     WatchtowerDetection,
-    werewolvesDen,
+    WerewolvesDen,
     WolvesDen,
     Workshop
   }

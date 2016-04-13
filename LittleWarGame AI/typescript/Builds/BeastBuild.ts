@@ -64,11 +64,23 @@ class BeastBuild implements ZChipAI.IBuild{
       priorityQueue.push(ZChipAI.BuildAction.TrainWorker);
     }
 
+    /*if(this._cache.wolves.length > 10){
+      priorityQueue.push(ZChipAI.BuildAction.UpgradeWolfDen);
+
+      if(this._cache.werewolfDens.length < 1){
+        return priorityQueue;
+      }
+    }*/
+
     if(this._cache.wolfDens.length > 0){
       priorityQueue.push(ZChipAI.BuildAction.TrainWolves);
     }
 
-    if(this._cache.houses.length > 0 && workersAvailable){
+    if(this._cache.werewolfDens.length > 0){
+      priorityQueue.push(ZChipAI.BuildAction.TrainWerewolf);
+    }
+
+    if(this._cache.houses.length > 0 && this._cache.werewolfDens.length + this._cache.wolfDens.length < 3 && workersAvailable){
       priorityQueue.push(ZChipAI.BuildAction.BuildWolfDen);
     }
 

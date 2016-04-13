@@ -25,7 +25,9 @@ module ZChipAI {
     TrainPriest,
     TrainBallista,
     TrainBird,
-    TrainCatapult
+    TrainCatapult,
+    TrainWerewolf,
+    UpgradeWolfDen
   }
 
   // Provides access to cached copies of scope data.
@@ -50,6 +52,16 @@ module ZChipAI {
       }
 
       return this._wolves;
+    }
+
+    // Gets a list of the player's werewolves.
+    private _werewolves: ZChipAPI.Unit[];
+    get werewolves(): ZChipAPI.Unit[]{
+      if(this._werewolves == null){
+        this._werewolves = this._scope.getUnits({type: ZChipAPI.UnitType.Werewolf, player: this._scope.playerNumber});
+      }
+
+      return this._werewolves;
     }
 
     // Gets a list of the player's mining workers.
@@ -215,6 +227,7 @@ module ZChipAI {
         this._unitProductionBuildings = this._unitProductionBuildings.concat(this.dragonLairs);
         this._unitProductionBuildings = this._unitProductionBuildings.concat(this.wolfDens);
         this._unitProductionBuildings = this._unitProductionBuildings.concat(this.workshops);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.werewolfDens);
       }
 
       return this._unitProductionBuildings;
@@ -322,6 +335,16 @@ module ZChipAI {
       }
 
       return this._wolfDens;
+    };
+
+    // Gets a list of the player's wolf dens.
+    private _werewolfDens: ZChipAPI.ProductionBuilding[];
+    get werewolfDens(): ZChipAPI.ProductionBuilding[]{
+      if(this._werewolfDens == null){
+        this._werewolfDens = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.WerewolvesDen});
+      }
+
+      return this._werewolfDens;
     };
 
     // Gets a list of the player's forges.
@@ -723,6 +746,8 @@ module ZChipAI {
           return ZChipAPI.UnitType.Ballista;
         case BuildAction.TrainCatapult:
           return ZChipAPI.UnitType.Catapult;
+        case BuildAction.TrainWerewolf:
+          return ZChipAPI.UnitType.Werewolf;
       }
     }
 
@@ -1058,6 +1083,7 @@ module ZChipAI {
           case BuildAction.TrainBird:
           case BuildAction.TrainCatapult:
           case BuildAction.TrainBallista:
+          case BuildAction.TrainWerewolf:
               for(let i = 0; i < this._cache.unitProductionBuildings.length; i++){
                 let productionBuilding: ZChipAPI.ProductionBuilding = this._cache.unitProductionBuildings[i];
 
@@ -1066,12 +1092,22 @@ module ZChipAI {
                 }
               }
               break;
+          case BuildAction.UpgradeWolfDen:
+            for(let i = 0; i < this._cache.wolfDens.length; i++){
+              let den = <ZChipAPI.ProductionBuilding>this._cache.wolfDens[i];
+
+              if(!den.isUnderConstruction && !den.isBusy){
+                den.researchUpgrade(ZChipAPI.UpgradeType.WerewolvesDenUpgrade);
+                break;
+              }
+            }
           case BuildAction.ResearchFireball:
             for(let i = 0; i < this._cache.magesGuilds.length; i++){
               let guild = <ZChipAPI.ProductionBuilding>this._cache.magesGuilds[i];
 
               if(!guild.isBusy){
                 guild.researchUpgrade(ZChipAPI.UpgradeType.FireballUpgrade);
+                break;
               }
             }
             break;
@@ -1081,6 +1117,7 @@ module ZChipAI {
 
               if(!forge.isBusy){
                 forge.researchUpgrade(prefferedUpgrade);
+                break;
               }
             }
           break;
