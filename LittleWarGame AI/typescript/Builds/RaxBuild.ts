@@ -29,7 +29,7 @@ class RaxBuild implements ZChipAI.IBuild{
     this.attackedDamageThreshold = 15;
     this.maxMineDistance =15;
     this.maxWorkersPerGoldmine = 10;
-    this.baseSpacing = 2;
+    this.baseSpacing = 1;
     this.watchtowersPerCastle = 0;
     this.supplyBuffer = 6;
     this.workerAttackDistance = 15;

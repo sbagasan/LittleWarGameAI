@@ -993,7 +993,6 @@ module ZChipAI {
 
       if(buildPosition == null){
         this._scope.chatMessage("General Z is thinking: My base is too small.");
-        this._baseSpacing = 1;
         this._maxBaseSize += 10;
         return false;
       }

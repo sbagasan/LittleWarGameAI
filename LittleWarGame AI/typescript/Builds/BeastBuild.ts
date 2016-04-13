@@ -23,7 +23,7 @@ class BeastBuild implements ZChipAI.IBuild{
   private _cache: ZChipAI.Cache;
 
   constructor (){
-    this.minimumArmySize = 2;
+    this.minimumArmySize = 3;
     this.attackArmySize = 5;
     this.upgradeRatio = 3;
     this.attackedDamageThreshold = 15;
@@ -47,6 +47,7 @@ class BeastBuild implements ZChipAI.IBuild{
   }
 
   establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):ZChipAI.BuildAction[]{
+    var wolfToWerewolfRatio: number = 3;
     var priorityQueue: ZChipAI.BuildAction[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
 
@@ -55,7 +56,14 @@ class BeastBuild implements ZChipAI.IBuild{
       return priorityQueue;
     }
 
-    if(this._scope.currentSupply + this.supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply < this._scope.supplyCap){
+    if(
+        this._cache.houses.length < 1
+        || (
+          this._scope.currentSupply + this.supplyBuffer >= this._scope.maxAvailableSupply
+          && this._scope.maxAvailableSupply < this._scope.supplyCap
+          && (this._cache.wolfDens.length + this._cache.werewolfDens.length) > 0
+        )
+      ){
       priorityQueue.push(ZChipAI.BuildAction.BuildHouse);
       return priorityQueue;
     }
@@ -64,20 +72,20 @@ class BeastBuild implements ZChipAI.IBuild{
       priorityQueue.push(ZChipAI.BuildAction.TrainWorker);
     }
 
-    /*if(this._cache.wolves.length > 10){
+    if(this._cache.werewolfDens.length > 0 && this._cache.werewolves.length * wolfToWerewolfRatio < this._cache.wolves.length){
+      priorityQueue.push(ZChipAI.BuildAction.TrainWerewolf);
+    }
+
+    if(this._cache.wolfDens.length > 1 && this._cache.wolves.length > 9){
       priorityQueue.push(ZChipAI.BuildAction.UpgradeWolfDen);
 
       if(this._cache.werewolfDens.length < 1){
         return priorityQueue;
       }
-    }*/
-
-    if(this._cache.wolfDens.length > 0){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWolves);
     }
 
-    if(this._cache.werewolfDens.length > 0){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWerewolf);
+    if(this._cache.wolfDens.length + this._cache.werewolfDens.length > 0 && (this._cache.werewolfDens.length == 0 || this._cache.werewolves.length * wolfToWerewolfRatio > this._cache.wolves.length)){
+      priorityQueue.push(ZChipAI.BuildAction.TrainWolves);
     }
 
     if(this._cache.houses.length > 0 && this._cache.werewolfDens.length + this._cache.wolfDens.length < 3 && workersAvailable){
