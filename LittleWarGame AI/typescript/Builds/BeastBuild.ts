@@ -26,7 +26,7 @@ class BeastBuild implements ZChipAI.IBuild{
     this.minimumArmySize = 3;
     this.attackArmySize = 5;
     this.upgradeRatio = 3;
-    this.attackedDamageThreshold = 15;
+    this.attackedDamageThreshold = 8;
     this.maxMineDistance =15;
     this.maxWorkersPerGoldmine = 10;
     this.baseSpacing = 2;

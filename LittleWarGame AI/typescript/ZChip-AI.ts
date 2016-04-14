@@ -1053,9 +1053,21 @@ module ZChipAI {
               }
             }
             break;
+          case BuildAction.BuildWolfDen:
+          case BuildAction.BuildBarracks:
+            let tierTwoBuildingType = ConstructionCommander.getBuildingTypeFromAction(workOrder);
+            let completedHouses = this._cache.houses.filter(x => x.isUnderConstruction == false);
+
+            if(!buildingInProgress && currentBase != null && completedHouses.length > 0){
+              let buildingStarted = this.buildBuildingNearBuilding(currentBase, tierTwoBuildingType);
+
+              if(buildingStarted){
+                buildingInProgress = true;
+              }
+            }
+            break;
           case BuildAction.BuildAdvancedWorkshop:
           case BuildAction.BuildAnimalTestingLab:
-          case BuildAction.BuildBarracks:
           case BuildAction.BuildChurch:
           case BuildAction.BuildDragonsLair:
           case BuildAction.BuildForge:
@@ -1063,7 +1075,6 @@ module ZChipAI {
           case BuildAction.BuildHouse:
           case BuildAction.BuildWatchtower:
           case BuildAction.BuildWorkshop:
-          case BuildAction.BuildWolfDen:
             let buildingType = ConstructionCommander.getBuildingTypeFromAction(workOrder);
             if(!buildingInProgress && currentBase != null){
               let buildingStarted = this.buildBuildingNearBuilding(currentBase, buildingType);
@@ -1211,12 +1222,12 @@ module ZChipAI {
     }
 
     // A function that takes in a list of units, and a dictionary of their hit points last AI cycle and determines which of them has been attacked.
-    getAttackedUnits(units: ZChipAPI.Unit[], oldHitpoints: number[]):ZChipAPI.Unit[] {
+    getAttackedUnits(units: ZChipAPI.Unit[], oldHitpoints: number[], damageThreshold: number):ZChipAPI.Unit[] {
       var attackedUnits = [];
       for(var i = 0; i < units.length; i++){
   			var unit = units[i];
   			var oldUnitHitpoints = oldHitpoints[unit.id];
-  			if(oldUnitHitpoints != null && oldUnitHitpoints - unit.hitpoints > this.attackedDamageThreshold){
+  			if(oldUnitHitpoints != null && oldUnitHitpoints - unit.hitpoints > damageThreshold){
   				attackedUnits.push(unit);
   			}
   		}
@@ -1245,12 +1256,12 @@ module ZChipAI {
     }
 
     // Commands the indicated units to flee if they are under attack.
-    setBehaviourCoward(units: ZChipAPI.Unit[]){
+    setBehaviourCoward(units: ZChipAPI.Unit[], damageThreshold:number){
       if(this._cache.enemyArmy.length == 0){
         return;
       }
 
-      let runaways: ZChipAPI.Unit[] = this.getAttackedUnits(units, this._oldHitpoints);
+      let runaways: ZChipAPI.Unit[] = this.getAttackedUnits(units, this._oldHitpoints, damageThreshold);
       let center = this._scope.getCenterOfUnits(this._cache.enemyArmy);
 
       for(let i = 0; i < runaways.length; i++){
@@ -1258,6 +1269,29 @@ module ZChipAI {
         let x = runaway.x - center.x;
         let y = runaway.y - center.y;
         runaway.move(runaway.x + x, runaway.y + y);
+      }
+    }
+
+    // Commands all specified units to smash attack if there are enough nearby enemies.
+    setBehaviourSmash(units: ZChipAPI.Unit[], smashTreshold: number){
+      for(let i = 0; i < units.length; i++){
+        let inRange:number = 0;
+        let smasher: ZChipAPI.Unit = units[i];
+        let smasherCenterX = smasher.x + (smasher.size / 2);
+        let smasherCenterY = smasher.y + (smasher.size / 2);
+
+        for(let j = 0; j < this._cache.enemyArmy.length; j++){
+          let smashee: ZChipAPI.Unit = this._cache.enemyArmy[j];
+          let smasheeCenterX = smashee.x + (smashee.size / 2);
+          let smasheeCenterY = smashee.y + (smashee.size / 2);
+          if(this._scope.getDistance(smasherCenterX, smasherCenterY, smasheeCenterX, smasheeCenterY) < 2.5){
+            inRange += 1;
+          }
+        }
+
+        if(inRange > smashTreshold){
+          this._scope.order(ZChipAPI.OrderType.Smash, [smasher], null, false);
+        }
       }
     }
 
@@ -1411,14 +1445,17 @@ module ZChipAI {
     // Issues individual micro commands.
     private issueMicroOrders(): void{
       var combatArchers = this.excludeScoutFromUnits(this._cache.archers);
-
+      var combatWolves = this.excludeScoutFromUnits(this._cache.wolves);
+      var combatWerewolves = this.excludeScoutFromUnits(this._cache.werewolves);
       //var archerCenter = this._scope.getCenterOfUnits(combatArchers);
       //var enemies = this._cache.enemyArmy;
       //var mostCentralEnemy = this._scope.getClosest(archerCenter.x, archerCenter.y, enemies);
 
       //this.setFocusFireBehaviour(combatArchers, mostCentralEnemy);
       this.setBehaviourVulture(combatArchers);
-      this.setBehaviourCoward(combatArchers);
+      this.setBehaviourCoward(combatArchers, this.attackedDamageThreshold);
+      this.setBehaviourCoward(combatWolves, this.attackedDamageThreshold);
+      this.setBehaviourSmash(combatWerewolves, 3);
     }
 
     // Issues all combat orders to units.

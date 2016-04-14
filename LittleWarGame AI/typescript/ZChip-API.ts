@@ -420,6 +420,8 @@ module ZChipAPI{
           return OrderType.UpgradeToWerewolvesDen;
         case "Stop":
           return OrderType.Stop;
+        case "Smash":
+          return OrderType.Smash;
         case "Construct Airship":
           return OrderType.TrainAirship;
         case "Train Archer":
@@ -492,7 +494,7 @@ module ZChipAPI{
         case UpgradeType.FireballUpgrade:
           return "Research Fireball";
         case UpgradeType.WerewolvesDenUpgrade:
-          return "Upgrade To Werewolves Den"
+          return "Werewolves Den"
         default:
           throw "No mapping for upgrade type:" + UpgradeType.toString();
       }
@@ -506,7 +508,7 @@ module ZChipAPI{
           return UpgradeType.ArmourUpgrades;
         case "Research Fireball":
           return UpgradeType.FireballUpgrade;
-        case "Upgrade To Werewolves Den":
+        case "Werewolves Den":
           return UpgradeType.WerewolvesDenUpgrade;
         default:
           return null;
@@ -557,6 +559,8 @@ module ZChipAPI{
           return "Upgrade To Werewolves Den";
         case OrderType.Stop:
           return "Stop";
+        case OrderType.Smash:
+          return "Smash";
         case OrderType.TrainAirship:
           return "Construct Airship";
         case OrderType.TrainArcher:
@@ -640,6 +644,7 @@ module ZChipAPI{
     Repair,
     ResearchFireball,
     UpgradeToWerewolvesDen,
+    Smash,
     Stop,
     TrainAirship,
     TrainArcher,
