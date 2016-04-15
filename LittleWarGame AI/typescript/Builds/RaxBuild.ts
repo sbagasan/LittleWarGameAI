@@ -4,7 +4,8 @@
 
 // A build based around barracks units.
 class RaxBuild implements ZChipAI.IBuild{
-  minimumArmySize: number;
+  scoutArmySize: number;
+  retreatArmySize: number;
   attackArmySize:number;
   upgradeRatio:number;
   attackedDamageThreshold: number;
@@ -19,11 +20,13 @@ class RaxBuild implements ZChipAI.IBuild{
   maxActiveMines: number;
   desiredActiveMines: number;
   minimumWorkers: number;
+  
   private _scope: ZChipAPI.Scope;
   private _cache: ZChipAI.Cache;
 
   constructor (){
-    this.minimumArmySize = 3;
+    this.scoutArmySize = 3;
+    this.retreatArmySize = 3;
     this.attackArmySize = 10;
     this.upgradeRatio = 3;
     this.attackedDamageThreshold = 15;

@@ -1158,35 +1158,11 @@ module ZChipAI {
     // The current target for the scout.
     currentScoutTarget: ZChipAPI.Mine;
 
-    // The minimum army size the AI should have, under which only defensive behaviour will occur.
-    minimumArmySize: number;
-
-    // The minimum army size the AI must attain before they become aggressive.
-    attackArmySize: number;
-
-    // The amount by which the workers must outnumber the enemy in order to attack them.
-    private _workerAttackRatio: number;
-
-    // The distance a worker will go in order to attack an enemy.
-    private _workerAttackDistance: number;
-
-    // The number of additional troops the AI must have before investing in the next unit upgrade level.
-    private _upgradeRatio: number;
-    get upgradeRatio():number{
-      return this._upgradeRatio;
-    }
-
     // A value indicating whether the AI should attack known or suspected enemy bases.
     attackMode: boolean;
 
-    // The amount of damage a unit must receive in one AI cycle to be considered under attack.
-    attackedDamageThreshold: number;
-
     // A list of goldmines suspected to harbour enemy bases.
     suspectedBases: ZChipAPI.Mine[];
-
-    // How close a unit must get to a goldmine to determine if there is an enemy base there.
-    checkMineForBaseDistance: number;
 
     // A list of the hitpoints last turn.
     private _oldHitpoints: number[];
@@ -1338,11 +1314,11 @@ module ZChipAI {
   	}
 
     // Determines if any units are close enough to a mine to clear suspicion from it.
-    private clearSuspicionFromScoutedMines(): void{
+    private clearSuspicionFromScoutedMines(clearDistance: number): void{
       this.suspectedBases = this.suspectedBases.filter((m:ZChipAPI.Mine):boolean =>{
         for(let j = 0; j < this._cache.units.length; j++){
           let unit = this._cache.units[j];
-          if(this._scope.getDistance(unit.x, unit.y, m.x, m.y) < this.checkMineForBaseDistance){
+          if(this._scope.getDistance(unit.x, unit.y, m.x, m.y) < clearDistance){
             this._scope.chatMessage("General Z is thinking: Ain't nobody here but us chickens.");
             return false;
           }
@@ -1362,7 +1338,7 @@ module ZChipAI {
     }
 
     // Selects a scout and orders that scout to move.
-    private issueScoutOrders():void{
+    private issueScoutOrders(minimumArmySizeToScout: number):void{
       if(this.scout == undefined){
         this.scout = null;
       }
@@ -1378,7 +1354,7 @@ module ZChipAI {
       }
 
       if(
-        this._cache.army.length > this.minimumArmySize
+        this._cache.army.length > minimumArmySizeToScout
         && this.scout == null
         && this._cache.enemyArmy.length == 0
         && this.suspectedBases.length + this._cache.enemyBuildings.length < 1){
@@ -1399,12 +1375,13 @@ module ZChipAI {
     }
 
     // Sets or unsets attack mode.
-    private setAttackMode():void{
-      if(this.attackMode == false && this._cache.army.length > this.attackArmySize){
+    private setAttackMode(attackArmySize: number, retreatArmySize: number):void{
+      // TODO: Magic number should go bye bye.
+      if(this.attackMode == false && (this._cache.army.length > attackArmySize || this._scope.currentSupply >= this._scope.supplyCap - 6)){
         this._scope.chatMessage("General Z is thinking: I'm ready to attack!");
         this.attackMode = true;
       }
-      else if(this.attackMode == true && this._cache.army.length < this.minimumArmySize){
+      else if(this.attackMode == true && this._cache.army.length < retreatArmySize){
         this._scope.chatMessage("General Z is thinking: My army has been decimated!");
         this.attackMode = false;
       }
@@ -1443,7 +1420,7 @@ module ZChipAI {
     }
 
     // Issues individual micro commands.
-    private issueMicroOrders(): void{
+    private issueMicroOrders(cowardThreshold: number): void{
       var combatArchers = this.excludeScoutFromUnits(this._cache.archers);
       var combatWolves = this.excludeScoutFromUnits(this._cache.wolves);
       var combatWerewolves = this.excludeScoutFromUnits(this._cache.werewolves);
@@ -1453,33 +1430,33 @@ module ZChipAI {
 
       //this.setFocusFireBehaviour(combatArchers, mostCentralEnemy);
       this.setBehaviourVulture(combatArchers);
-      this.setBehaviourCoward(combatArchers, this.attackedDamageThreshold);
-      this.setBehaviourCoward(combatWolves, this.attackedDamageThreshold);
+      this.setBehaviourCoward(combatArchers, cowardThreshold);
+      this.setBehaviourCoward(combatWolves, cowardThreshold);
       this.setBehaviourSmash(combatWerewolves, 3);
     }
 
     // Issues all combat orders to units.
-    executeCombatOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
-      this.clearSuspicionFromScoutedMines();
+    executeCombatOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building, options: IBuild):void{
+      this.clearSuspicionFromScoutedMines(options.checkMineForBaseDistance);
 
-      this.setAttackMode();
+      this.setAttackMode(options.attackArmySize, options.retreatArmySize);
 
-      this.issueScoutOrders();
+      this.issueScoutOrders(options.scoutArmySize);
 
       this.issueGeneralOrders(expansionTarget, primaryBase);
 
-      this.issueMicroOrders();
+      this.issueMicroOrders(options.attackedDamageThreshold);
 
-      this.pullWorkers();
+      this.pullWorkers(options.workerAttackRatio, options.workerAttackDistance);
 
       this._oldHitpoints = this.getUnitHitpoints(this._cache.army);
     }
 
-    private pullWorkers():void {
+    private pullWorkers(workerAttackRatio: number, workerAttackDistance: number):void {
       var enemies: ZChipAPI.Unit[] = this._cache.enemyArmy;
       var workers: ZChipAPI.Worker[] = this._cache.workers;
 
-      if(enemies.length > this._cache.army.length && workers.length /  this._workerAttackRatio > enemies.length){
+      if(enemies.length > this._cache.army.length && workers.length /  workerAttackRatio > enemies.length){
         for(let i = 0; i < workers.length; i++){
           var worker: ZChipAPI.Worker = workers[i];
           var closestEnemy: ZChipAPI.Unit = <ZChipAPI.Unit>this._scope.getClosestByGround(worker.x, worker.y, enemies);
@@ -1489,27 +1466,19 @@ module ZChipAI {
           }
 
           var distanceToTarget: number = this._scope.getGroundDistance(worker.x, worker.y, closestEnemy.x, closestEnemy.y)
-          if(distanceToTarget != null && distanceToTarget < this._workerAttackDistance){
+          if(distanceToTarget != null && distanceToTarget < workerAttackDistance){
             worker.attack(closestEnemy);
           }
         }
       }
     }
 
-    constructor(minimumArmySize:number, attackArmySize:number, upgradeRatio: number, attackedDamageThreshold:number, checkMineForBaseDistance:number, workerAttackRatio: number, workerAttackDistance: number){
+    constructor(){
       super();
-      this.minimumArmySize = minimumArmySize;
-      this.attackArmySize = attackArmySize;
-      this._upgradeRatio = upgradeRatio;
-      this.attackedDamageThreshold = attackedDamageThreshold;
-      this._workerAttackRatio = workerAttackRatio;
-      this._workerAttackDistance = workerAttackDistance;
-
       this.scout = null;
       this.scoutOrder = null;
       this.attackMode = false;
       this.suspectedBases = [];
-      this.checkMineForBaseDistance = checkMineForBaseDistance;
     }
   }
 
@@ -1553,7 +1522,7 @@ module ZChipAI {
       this.constructionCommander.rebuildAndRepair(this.economyCommander.disposableWorkers);
 
       // Combat Orders.
-      this.combatCommander.executeCombatOrders(expansionTarget, primaryBase);
+      this.combatCommander.executeCombatOrders(expansionTarget, primaryBase, this.build);
     }
 
     // Selects the current primary base.
@@ -1581,7 +1550,7 @@ module ZChipAI {
     constructor(build: IBuild){
       super();
       this.build = build;
-      this.combatCommander = new CombatCommander(this.build.minimumArmySize, this.build.attackArmySize, this.build.upgradeRatio, this.build.attackedDamageThreshold, this.build.checkMineForBaseDistance, this.build.workerAttackRatio, this.build.workerAttackDistance);
+      this.combatCommander = new CombatCommander();
       this.economyCommander = new EconomyCommander(this.build.maxMineDistance, this.build.maxWorkersPerGoldmine, this.build.maxActiveMines, this.build.desiredActiveMines, this.build.minimumWorkers);
       this.constructionCommander =  new  ConstructionCommander(this.build.baseSpacing, this.build.watchtowersPerCastle, this.build.supplyBuffer, this.build.maxMineDistance);
     }
@@ -1589,7 +1558,8 @@ module ZChipAI {
 
   // A class with static values that determine the AI's behaviour.
   export interface IBuild{
-    minimumArmySize: number;
+    scoutArmySize: number;
+    retreatArmySize: number;
     attackArmySize:number;
     upgradeRatio:number;
     attackedDamageThreshold: number;

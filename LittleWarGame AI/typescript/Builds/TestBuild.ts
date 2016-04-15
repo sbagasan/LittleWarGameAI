@@ -4,7 +4,8 @@
 
 // A build based around barracks units.
 class TestBuild implements ZChipAI.IBuild{
-  minimumArmySize: number;
+  scoutArmySize: number;
+  retreatArmySize: number;
   attackArmySize:number;
   upgradeRatio:number;
   attackedDamageThreshold: number;
@@ -19,11 +20,13 @@ class TestBuild implements ZChipAI.IBuild{
   maxActiveMines: number;
   desiredActiveMines: number;
   minimumWorkers: number;
+  
   private _scope: ZChipAPI.Scope;
   private _cache: ZChipAI.Cache;
 
   constructor (){
-    this.minimumArmySize = 2;
+    this.scoutArmySize = 2;
+    this.retreatArmySize = 2;
     this.attackArmySize = 5;
     this.upgradeRatio = 3;
     this.attackedDamageThreshold = 15;
