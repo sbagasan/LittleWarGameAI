@@ -20,7 +20,7 @@ class TestBuild implements ZChipAI.IBuild{
   maxActiveMines: number;
   desiredActiveMines: number;
   minimumWorkers: number;
-  
+
   private _scope: ZChipAPI.Scope;
   private _cache: ZChipAI.Cache;
 

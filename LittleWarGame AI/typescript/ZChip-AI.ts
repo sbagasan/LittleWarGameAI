@@ -1294,10 +1294,9 @@ module ZChipAI {
     }
 
     // Returns the unit to the specified building.
-    returnArmyToBase(base: ZChipAPI.Building):void{
-      var nonScoutArmy = this.excludeScoutFromUnits(this._cache.army);
-      for(let i = 0; i < nonScoutArmy.length; i++){
-        var fighter = nonScoutArmy[i];
+    setBehaviourRetreat(units: ZChipAPI.Unit[], base: ZChipAPI.Building):void{
+      for(let i = 0; i < units.length; i++){
+        var fighter = units[i];
         fighter.moveTo(base);
       }
     }
@@ -1329,10 +1328,9 @@ module ZChipAI {
     }
 
     // Orders units other than the scout to attack move to the coordinate.
-    private attackExcludeScout(x:number, y:number):void{
-      var nonScoutArmy = this.excludeScoutFromUnits(this._cache.army);
-      for(let i = 0; i < nonScoutArmy.length; i++){
-        var fighter = nonScoutArmy[i];
+    private setBehaviourAttack(units: ZChipAPI.Unit[], x:number, y:number):void{
+      for(let i = 0; i < units.length; i++){
+        var fighter = units[i];
         fighter.attackTo(x, y);
       }
     }
@@ -1389,33 +1387,35 @@ module ZChipAI {
 
     // Issues general attack and retreat orders.
     private issueGeneralOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
+      let nonScoutArmy = this.excludeScoutFromUnits(this._cache.army);
+
       if(this._cache.enemyUnits.length > 0){
         let target = this._scope.getCenterOfUnits(this._cache.enemyUnits);
-        this.attackExcludeScout(target.x, target.y);
+        this.setBehaviourAttack(nonScoutArmy, target.x, target.y);
       }
       else if(expansionTarget != null){
-        this.attackExcludeScout(expansionTarget.x, expansionTarget.y);
+        this.setBehaviourAttack(nonScoutArmy,expansionTarget.x, expansionTarget.y);
       }
       else if(this.attackMode == false  && primaryBase != null){
-        this.returnArmyToBase(primaryBase);
+        this.setBehaviourRetreat(nonScoutArmy, primaryBase);
       }
       else if(this.attackMode == true && this._cache.enemyBuildings.length > 0){
         // TODO prioritize target.
         var targetBuilding = this._cache.enemyBuildings[0];
-        this.attackExcludeScout(targetBuilding.x, targetBuilding.y);
+        this.setBehaviourAttack(nonScoutArmy,targetBuilding.x, targetBuilding.y);
       }
       else if(this.attackMode == true && this.suspectedBases.length > 0){
         if(this.suspectedBases.length > 0){
           var targetMine = this.suspectedBases[0];
-          this.attackExcludeScout(targetMine.x, targetMine.y);
+          this.setBehaviourAttack(nonScoutArmy,targetMine.x, targetMine.y);
         }
       }
       else if(primaryBase != null){
-        this.returnArmyToBase(primaryBase);
+        this.setBehaviourRetreat(nonScoutArmy,primaryBase);
       }
       else{
         let unitCenter = this._scope.getCenterOfUnits(this._cache.units);
-        this.attackExcludeScout(unitCenter.x, unitCenter.y);
+        this.setBehaviourAttack(nonScoutArmy,unitCenter.x, unitCenter.y);
       }
     }
 
