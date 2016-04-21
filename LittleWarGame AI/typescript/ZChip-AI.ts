@@ -1276,16 +1276,16 @@ module ZChipAI {
         let smasherCenterX = smasher.x + (smasher.size / 2);
         let smasherCenterY = smasher.y + (smasher.size / 2);
 
-        for(let j = 0; j < this._cache.enemyArmy.length; j++){
-          let smashee: ZChipAPI.Unit = this._cache.enemyArmy[j];
+        for(let j = 0; j < this._cache.enemyUnits.length; j++){
+          let smashee: ZChipAPI.Unit = this._cache.enemyUnits[j];
           let smasheeCenterX = smashee.x + (smashee.size / 2);
           let smasheeCenterY = smashee.y + (smashee.size / 2);
-          if(this._scope.getDistance(smasherCenterX, smasherCenterY, smasheeCenterX, smasheeCenterY) < 2.5){
+          if(this._scope.getDistance(smasherCenterX, smasherCenterY, smasheeCenterX, smasheeCenterY) < 3){
             inRange += 1;
           }
         }
 
-        if(inRange > smashTreshold){
+        if(inRange >= smashTreshold){
           this._scope.order(ZChipAPI.OrderType.Smash, [smasher], null, false);
         }
       }
