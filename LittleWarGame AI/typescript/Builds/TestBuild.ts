@@ -93,11 +93,11 @@ class TestBuild implements ZChipAI.IBuild{
       priorityQueue.push(ZChipAI.BuildAction.BuildWatchtower);
     }
 
-    if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades) < 1 || this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades)){
+    if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades) < 1 || this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades) < 1){
       priorityQueue.push(ZChipAI.BuildAction.BarracksUpgrades);
     }
 
-    if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastAttackUpgrades) < 1 || this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastArmourUpgrades)){
+    if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastAttackUpgrades) < 1 || this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastArmourUpgrades) < 1){
       priorityQueue.push(ZChipAI.BuildAction.BeastUpgrades);
     }
 
