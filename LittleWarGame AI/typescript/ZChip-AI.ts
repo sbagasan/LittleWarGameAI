@@ -16,6 +16,7 @@ module ZChipAI {
     BuildWorkshop,
     BuildWolfDen,
     BarracksUpgrades,
+    BeastUpgrades,
     ResearchFireball,
     TrainWorker,
     TrainSoldier,
@@ -1033,7 +1034,7 @@ module ZChipAI {
     }
 
     // Executes the build orders as determined by the priority.
-    executeBuildOrders(priority: BuildAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedUpgrade: ZChipAPI.UpgradeType){
+    executeBuildOrders(priority: BuildAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building){
       var buildingInProgress = false;
       if(this.getPendingBuildOrders().length > 0){
         buildingInProgress = true;
@@ -1124,6 +1125,16 @@ module ZChipAI {
           case BuildAction.BarracksUpgrades:
             for(let i = 0; i < this._cache.forges.length; i++){
               let forge = <ZChipAPI.ProductionBuilding>this._cache.forges[i];
+              let attackUpgradeLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades);
+              let armourUpgradeLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades);
+              let prefferedUpgrade: ZChipAPI.UpgradeType;
+
+              if(attackUpgradeLevel > armourUpgradeLevel){
+                prefferedUpgrade = ZChipAPI.UpgradeType.ArmourUpgrades;
+              }
+              else{
+                prefferedUpgrade = ZChipAPI.UpgradeType.AttackUpgrades;
+              }
 
               if(!forge.isBusy){
                 forge.researchUpgrade(prefferedUpgrade);
@@ -1131,6 +1142,24 @@ module ZChipAI {
               }
             }
           break;
+          case BuildAction.BeastUpgrades:
+            for(let i = 0; i < this._cache.animalTestingLabs.length; i++){
+              let lab = <ZChipAPI.ProductionBuilding>this._cache.animalTestingLabs[i];
+              let beastAttackUpgradeLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastAttackUpgrades);
+              let beastArmourUpgradLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastArmourUpgrades);
+              let prefferedUpgrade: ZChipAPI.UpgradeType;
+
+              if(beastAttackUpgradeLevel > beastArmourUpgradLevel){
+                prefferedUpgrade = ZChipAPI.UpgradeType.BeastArmourUpgrades;
+              }
+              else{
+                prefferedUpgrade = ZChipAPI.UpgradeType.BeastAttackUpgrades;
+              }
+
+              if(!lab.isBusy){
+                lab.researchUpgrade(prefferedUpgrade);
+              }
+            }
         }
       }
     }
@@ -1186,15 +1215,6 @@ module ZChipAI {
 
 
       return this._cache.mines;
-    }
-
-    get prefferedUpgrade(): ZChipAPI.UpgradeType{
-      if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades) > this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades)){
-        return ZChipAPI.UpgradeType.ArmourUpgrades;
-      }
-      else{
-        return ZChipAPI.UpgradeType.AttackUpgrades;
-      }
     }
 
     // A function that takes in a list of units, and a dictionary of their hit points last AI cycle and determines which of them has been attacked.
@@ -1518,7 +1538,7 @@ module ZChipAI {
 
       // Build Orders.
       var constructionPriority: BuildAction[] = this.build.establishBuildPriority(expansionTarget, this.economyCommander.targetWorkerCount, this.economyCommander.disposableWorkers, this.constructionCommander.getUpgradesInProgress());
-      this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedUpgrade);
+      this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase);
       this.constructionCommander.rebuildAndRepair(this.economyCommander.disposableWorkers);
 
       // Combat Orders.

@@ -20,7 +20,7 @@ class TestBuild implements ZChipAI.IBuild{
   maxActiveMines: number;
   desiredActiveMines: number;
   minimumWorkers: number;
-  
+
   private _scope: ZChipAPI.Scope;
   private _cache: ZChipAI.Cache;
 
@@ -91,6 +91,14 @@ class TestBuild implements ZChipAI.IBuild{
 
     if(this._cache.watchtowers.length < 1){
       priorityQueue.push(ZChipAI.BuildAction.BuildWatchtower);
+    }
+
+    if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades) < 1 || this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades)){
+      priorityQueue.push(ZChipAI.BuildAction.BarracksUpgrades);
+    }
+
+    if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastAttackUpgrades) < 1 || this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastArmourUpgrades)){
+      priorityQueue.push(ZChipAI.BuildAction.BeastUpgrades);
     }
 
     if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.FireballUpgrade) < 1){

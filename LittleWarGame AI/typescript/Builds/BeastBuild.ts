@@ -28,7 +28,7 @@ class BeastBuild implements ZChipAI.IBuild{
     this.scoutArmySize = 1;
     this.retreatArmySize = 4;
     this.attackArmySize = 5;
-    this.upgradeRatio = 3;
+    this.upgradeRatio = 2;
     this.attackedDamageThreshold = 8;
     this.maxMineDistance =15;
     this.maxWorkersPerGoldmine = 10;
@@ -51,6 +51,7 @@ class BeastBuild implements ZChipAI.IBuild{
 
   establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):ZChipAI.BuildAction[]{
     var wolfToWerewolfRatio: number = 3;
+    var wolfToEnemyRatio: number = 1;
     var priorityQueue: ZChipAI.BuildAction[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
     var inProgressWerewolfDens = this._cache.wolfDens.filter(x => x.getUpgradeProductionAtQueue(0) == ZChipAPI.UpgradeType.WerewolvesDenUpgrade);
@@ -83,7 +84,24 @@ class BeastBuild implements ZChipAI.IBuild{
       priorityQueue.push(ZChipAI.BuildAction.BuildWorkshop);
     }
 
-    if(this._cache.wolfDens.length > 1 && this._cache.wolves.length > 9){
+    if(this._cache.werewolves.length > this.upgradeRatio && this._cache.animalTestingLabs.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildAnimalTestingLab);
+      return priorityQueue;
+    }
+
+    let beastAttackUpgradeLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastAttackUpgrades);
+    let beastArmourUpgradLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.BeastArmourUpgrades);
+    // TODO: 5 is a magic number. Baaad.
+    if(this._cache.animalTestingLabs.length > 0 && beastAttackUpgradeLevel < 5 && beastArmourUpgradLevel < 5 && this._cache.werewolves.length / this.upgradeRatio > beastAttackUpgradeLevel){
+      priorityQueue.push(ZChipAI.BuildAction.BeastUpgrades);
+
+      let upgradeCost = Math.max(this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.BeastAttackUpgrades, ZChipAPI.TypeField.Cost)) + ((beastAttackUpgradeLevel + beastArmourUpgradLevel) * 60);
+      if(upgradesInProgress.length < this._cache.animalTestingLabs.length && this._scope.currentGold < upgradeCost){
+        return priorityQueue;
+      }
+    }
+
+    if(this._cache.wolfDens.length > 1 && (this._cache.wolves.length > 9 || this._cache.wolves.length < this._cache.enemyArmy.length * wolfToEnemyRatio)){
       priorityQueue.push(ZChipAI.BuildAction.UpgradeWolfDen);
 
       if(this._cache.werewolfDens.length + inProgressWerewolfDens.length < 1){

@@ -446,10 +446,14 @@ module ZChipAPI{
           return OrderType.TrainWolf;
         case "Train Worker":
           return OrderType.TrainWorker;
-        case "Upgrade Armour":
+        case "Armor Upgrade":
           return OrderType.UpgradeArmour;
-        case "Upgrade Attack":
+        case "Attack Upgrade":
           return OrderType.UpgradeAttack;
+        case "Beast Attack Upgrade":
+          return OrderType.UpgradeBeastAttack;
+        case "Beast Defense Upgrade":
+          return OrderType.UpgradeBeastArmour
         default:
           throw "No mapping for order named:" + orderName;
       }
@@ -465,6 +469,10 @@ module ZChipAPI{
           return UpgradeType.FireballUpgrade;
         case OrderType.UpgradeToWerewolvesDen:
           return UpgradeType.WerewolvesDenUpgrade;
+        case OrderType.UpgradeBeastAttack:
+          return UpgradeType.BeastAttackUpgrades;
+        case OrderType.UpgradeBeastArmour:
+          return UpgradeType.BeastArmourUpgrades;
         default:
           return null;
       }
@@ -480,6 +488,10 @@ module ZChipAPI{
           return OrderType.ResearchFireball;
         case UpgradeType.WerewolvesDenUpgrade:
           return OrderType.UpgradeToWerewolvesDen;
+        case UpgradeType.BeastAttackUpgrades:
+          return OrderType.UpgradeBeastAttack;
+        case UpgradeType.BeastArmourUpgrades:
+          return OrderType.UpgradeBeastArmour;
         default:
           throw "No order mapping for upgrade named: " + UpgradeType.toString();
       }
@@ -494,7 +506,11 @@ module ZChipAPI{
         case UpgradeType.FireballUpgrade:
           return "Research Fireball";
         case UpgradeType.WerewolvesDenUpgrade:
-          return "Werewolves Den"
+          return "Werewolves Den";
+        case UpgradeType.BeastAttackUpgrades:
+          return "Beast Attack";
+        case UpgradeType.BeastArmourUpgrades:
+          return "Beast Defense";
         default:
           throw "No mapping for upgrade type:" + UpgradeType.toString();
       }
@@ -510,6 +526,10 @@ module ZChipAPI{
           return UpgradeType.FireballUpgrade;
         case "Werewolves Den":
           return UpgradeType.WerewolvesDenUpgrade;
+        case "Beast Attack":
+          return UpgradeType.BeastAttackUpgrades;
+        case "Beast Defense":
+          return UpgradeType.BeastArmourUpgrades;
         default:
           return null;
       }
@@ -589,6 +609,10 @@ module ZChipAPI{
           return "Armor Upgrade";
         case OrderType.UpgradeAttack:
           return "Attack Upgrade";
+        case OrderType.UpgradeBeastAttack:
+          return "Beast Attack Upgrade";
+        case OrderType.UpgradeBeastArmour:
+          return "Beast Defense Upgrade";
         default:
           throw "No mapping for order: " + type.toString();
       }
@@ -611,6 +635,8 @@ module ZChipAPI{
   export enum UpgradeType{
     AttackUpgrades,
     ArmourUpgrades,
+    BeastAttackUpgrades,
+    BeastArmourUpgrades,
     FireballUpgrade,
     WerewolvesDenUpgrade
   }
@@ -659,7 +685,9 @@ module ZChipAPI{
     TrainWolf,
     TrainWorker,
     UpgradeArmour,
-    UpgradeAttack
+    UpgradeAttack,
+    UpgradeBeastAttack,
+    UpgradeBeastArmour
   }
 
   // Represents building types.
