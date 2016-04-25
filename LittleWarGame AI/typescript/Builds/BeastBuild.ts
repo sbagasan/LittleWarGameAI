@@ -51,7 +51,7 @@ class BeastBuild implements ZChipAI.IBuild{
 
   establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):ZChipAI.BuildAction[]{
     var wolfToWerewolfRatio: number = 3;
-    var wolfToEnemyRatio: number = 1;
+    var wolfToEnemyRatio: number = 1.25;
     var priorityQueue: ZChipAI.BuildAction[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
     var inProgressWerewolfDens = this._cache.wolfDens.filter(x => x.getUpgradeProductionAtQueue(0) == ZChipAPI.UpgradeType.WerewolvesDenUpgrade);
@@ -76,14 +76,6 @@ class BeastBuild implements ZChipAI.IBuild{
       priorityQueue.push(ZChipAI.BuildAction.TrainWorker);
     }
 
-    if(this._cache.werewolfDens.length > 0 && this._cache.werewolves.length * wolfToWerewolfRatio < this._cache.wolves.length){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWerewolf);
-    }
-
-    if(this._cache.werewolfDens.length + inProgressWerewolfDens.length > 0 && this._cache.workshops.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildWorkshop);
-    }
-
     if(this._cache.werewolves.length > this.upgradeRatio && this._cache.animalTestingLabs.length < 1){
       priorityQueue.push(ZChipAI.BuildAction.BuildAnimalTestingLab);
       return priorityQueue;
@@ -99,6 +91,14 @@ class BeastBuild implements ZChipAI.IBuild{
       if(upgradesInProgress.length < this._cache.animalTestingLabs.length && this._scope.currentGold < upgradeCost){
         return priorityQueue;
       }
+    }
+
+    if(this._cache.werewolfDens.length > 0 && this._cache.werewolves.length * wolfToWerewolfRatio < this._cache.wolves.length){
+      priorityQueue.push(ZChipAI.BuildAction.TrainWerewolf);
+    }
+
+    if(this._cache.werewolfDens.length + inProgressWerewolfDens.length > 0 && this._cache.workshops.length < 1){
+      priorityQueue.push(ZChipAI.BuildAction.BuildWorkshop);
     }
 
     if(this._cache.wolfDens.length > 1 && (this._cache.wolves.length > 9 || this._cache.wolves.length < this._cache.enemyArmy.length * wolfToEnemyRatio)){

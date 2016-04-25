@@ -1095,10 +1095,11 @@ module ZChipAI {
           case BuildAction.TrainCatapult:
           case BuildAction.TrainBallista:
           case BuildAction.TrainWerewolf:
+              let supplyCost: number = this._scope.getUnitTypeFieldValue(ConstructionCommander.getUnitTypeFromAction(workOrder), ZChipAPI.TypeField.Supply);
               for(let i = 0; i < this._cache.unitProductionBuildings.length; i++){
                 let productionBuilding: ZChipAPI.ProductionBuilding = this._cache.unitProductionBuildings[i];
 
-                if(!productionBuilding.isBusy){
+                if(!productionBuilding.isBusy && this._scope.currentSupply + supplyCost <= this._scope.maxAvailableSupply){
                   productionBuilding.trainUnit(ConstructionCommander.getUnitTypeFromAction(workOrder));
                 }
               }
