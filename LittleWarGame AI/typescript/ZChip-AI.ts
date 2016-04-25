@@ -410,8 +410,9 @@ module ZChipAI {
     private _enemyArmy: ZChipAPI.Unit[];
     get enemyArmy():ZChipAPI.Unit[]{
       if(this._enemyArmy == null){
-        this._enemyArmy = this._scope.getUnits({enemyOf: this._scope.playerNumber, notOfType: ZChipAPI.UnitType.Worker}).filter(
+        this._enemyArmy = this._scope.getUnits({enemyOf: this._scope.playerNumber}).filter(
           (unit: ZChipAPI.Unit) =>{
+            if(unit.type == ZChipAPI.UnitType.Worker || unit.type == ZChipAPI.UnitType.Bird)
             return !unit.isNeutral;
           }
         );
