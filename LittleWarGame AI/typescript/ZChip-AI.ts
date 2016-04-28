@@ -1200,23 +1200,40 @@ module ZChipAI {
 
     // Returns a list of mines to scout in priority order.
     getScoutMinePriority(): ZChipAPI.Mine[]{
+      var unorderedMines: Array<ZChipAPI.Mine> = [];
+      var scoutOrder: Array<ZChipAPI.Mine> = [];
+
       if(this.scoutOrder == null){
-        var scoutOrder = [];
         var players = this._scope.players;
+
+
         for(let i: number = 0; i < players.length; i++){
-          var player = players[i];
-          var location = this._scope.getStartPosition(players[i]);
+          let player: number = players[i];
+
+          let location: LWG.IPoint = this._scope.getStartPosition(players[i]);
+
+          let startingMine:ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosestByGround(location.x, location.y, this._cache.mines);
+
           if(location != null && player != this._scope.playerNumber){
-            var startingMine = this._scope.getClosestByGround(location.x, location.y, this._cache.mines);
-            scoutOrder.push(startingMine);
+            unorderedMines.push(startingMine);
           }
         }
-
-        return scoutOrder;
+      }
+      else{
+        unorderedMines = this._cache.mines;
       }
 
+      var lastLocation = this._scope.getStartPosition(this._scope.playerNumber);
+      while(unorderedMines.length > 0){
+        let nextMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosestByGround(lastLocation.x, lastLocation.y, unorderedMines);
+        unorderedMines = unorderedMines.filter((m) => {
+          return m.id != nextMine.id;
+        })
+        scoutOrder.push(nextMine);
+        lastLocation = new ZChipAPI.Point(nextMine.x, nextMine.y);
+      }
 
-      return this._cache.mines;
+      return scoutOrder;
     }
 
     // A function that takes in a list of units, and a dictionary of their hit points last AI cycle and determines which of them has been attacked.
