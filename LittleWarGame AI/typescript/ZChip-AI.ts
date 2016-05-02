@@ -1517,7 +1517,10 @@ module ZChipAI {
       if(enemies.length > this._cache.army.length && workers.length /  workerAttackRatio > enemies.length){
         for(let i = 0; i < workers.length; i++){
           var worker: ZChipAPI.Worker = workers[i];
-          var closestEnemy: ZChipAPI.Unit = <ZChipAPI.Unit>this._scope.getClosestByGround(worker.x, worker.y, enemies);
+          var nearbyEnemies = enemies.filter((e)=> {
+            return this._scope.getDistance(worker.x, worker.y, e.x, e.y) < workerAttackDistance;
+          });
+          var closestEnemy: ZChipAPI.Unit = <ZChipAPI.Unit>this._scope.getClosestByGround(worker.x, worker.y, nearbyEnemies);
 
           if(closestEnemy == null){
               continue;
