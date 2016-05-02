@@ -1268,6 +1268,10 @@ module ZChipAPI{
       return this._innerUnit;
     }
 
+    get ownerNumber(): number{
+      return this._innerUnit.getOwnerNumber();
+    }
+
     // Returns the game cycle when the game entity was created.
     get creationCycle():number{
       return this._innerUnit.getValue(HiddenMagicStrings.cretionCyclePropertyKey);

@@ -55,6 +55,17 @@ module ZChipAI {
       return this._wolves;
     }
 
+    private _alliedCastles: ZChipAPI.Building[];
+    get alliedCastles():ZChipAPI.Building[]{
+      if(this._alliedCastles == null){
+        let teamCastles = this._scope.getBuildings({type: ZChipAPI.BuildingType.Castle, team: this._scope.teamNumber});
+
+        this._alliedCastles = teamCastles.filter((x) => x.ownerNumber != this._scope.playerNumber);
+      }
+
+      return this._alliedCastles;
+    }
+
     // Gets a list of the player's werewolves.
     private _werewolves: ZChipAPI.Unit[];
     get werewolves(): ZChipAPI.Unit[]{
@@ -588,6 +599,14 @@ module ZChipAI {
           return candidate.equals(a);
         }).length > 0){
           // Don't expand to the mine if we're already working it.
+
+          continue;
+        }
+
+        if(this._cache.alliedCastles.filter((c:ZChipAPI.Building)=>{
+          return this.getCachedDistanceBetweenBuildings(c, candidate) < this._maxMineDistance;
+        }).length > 0){
+          // Dont expand if the mine is being worked by an ally.
 
           continue;
         }
