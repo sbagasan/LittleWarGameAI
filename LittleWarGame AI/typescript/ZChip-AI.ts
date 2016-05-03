@@ -1417,7 +1417,9 @@ module ZChipAI {
         && this._cache.enemyArmy.length == 0
         && this.suspectedBases.length + this._cache.enemyBuildings.length < 1){
         // TODO: limit or prioritize unit type so expensive units aren't used.
-  			this.scout = this._cache.army[0];
+  			this.scout = this._cache.army.sort((a, b)=>{
+          return this._scope.getUnitTypeFieldValue(a.type, ZChipAPI.TypeField.Cost) - this._scope.getUnitTypeFieldValue(b.type, ZChipAPI.TypeField.Cost)
+        })[0];
   			this.scout.stop();
   			this._scope.chatMessage("General Z is thinking: I've selected a new scout.");
   		}
