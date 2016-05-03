@@ -1449,8 +1449,8 @@ module ZChipAI {
 
     // Issues general attack and retreat orders.
     private issueGeneralOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building):void{
-      if(this._cache.enemyUnits.length > 0){
-        let target = this._scope.getCenterOfUnits(this._cache.enemyUnits);
+      if(this._cache.enemyArmy.length > 0){
+        let target = this._scope.getCenterOfUnits(this._cache.enemyArmy);
         this.attackExcludeScout(target.x, target.y);
       }
       else if(expansionTarget != null){
