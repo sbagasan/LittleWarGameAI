@@ -1542,6 +1542,7 @@ module ZChipAI {
       this.scoutOrder = null;
       this.attackMode = false;
       this.suspectedBases = [];
+      this._oldHitpoints = [];
     }
   }
 
