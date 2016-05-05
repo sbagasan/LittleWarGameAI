@@ -1014,7 +1014,7 @@ module ZChipAI {
 
       if(buildPosition == null){
         this._scope.chatMessage("General Z is thinking: My base is too small.");
-        this._maxBaseSize += 10;
+        this._maxBaseSize = Math.min(this._maxBaseSize + 10, Math.max(this._scope.mapWidth, this._scope.mapHeight));
         return false;
       }
 
