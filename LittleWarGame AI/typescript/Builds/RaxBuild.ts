@@ -20,7 +20,8 @@ class RaxBuild implements ZChipAI.IBuild{
   maxActiveMines: number;
   desiredActiveMines: number;
   minimumWorkers: number;
-  
+  attackRampUp: number;
+
   private _scope: ZChipAPI.Scope;
   private _cache: ZChipAI.Cache;
 
@@ -40,7 +41,8 @@ class RaxBuild implements ZChipAI.IBuild{
     this.checkMineForBaseDistance = 4;
     this.maxActiveMines = 3;
     this.desiredActiveMines = 2;
-    this.minimumWorkers = 5
+    this.minimumWorkers = 5;
+    this.attackRampUp = 5;
   }
 
 

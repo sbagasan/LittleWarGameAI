@@ -1435,14 +1435,15 @@ module ZChipAI {
     }
 
     // Sets or unsets attack mode.
-    private setAttackMode(attackArmySize: number, retreatArmySize: number):void{
+    private setAttackMode(options:IBuild):void{
       // TODO: Magic number should go bye bye.
-      if(this.attackMode == false && (this._cache.army.length > attackArmySize || this._scope.currentSupply >= this._scope.supplyCap - 6)){
+      if(this.attackMode == false && (this._cache.army.length > options.attackArmySize || this._scope.currentSupply >= this._scope.supplyCap - 6)){
         this._scope.chatMessage("General Z is thinking: I'm ready to attack!");
         this.attackMode = true;
       }
-      else if(this.attackMode == true && this._cache.army.length < retreatArmySize){
+      else if(this.attackMode == true && this._cache.army.length < options.retreatArmySize){
         this._scope.chatMessage("General Z is thinking: My army has been decimated!");
+        options.attackArmySize += options.attackRampUp;
         this.attackMode = false;
       }
     }
@@ -1499,7 +1500,7 @@ module ZChipAI {
     executeCombatOrders(expansionTarget: ZChipAPI.Mine, primaryBase: ZChipAPI.Building, options: IBuild):void{
       this.clearSuspicionFromScoutedMines(options.checkMineForBaseDistance);
 
-      this.setAttackMode(options.attackArmySize, options.retreatArmySize);
+      this.setAttackMode(options);
 
       this.issueScoutOrders(options.scoutArmySize);
 
@@ -1625,6 +1626,7 @@ module ZChipAI {
     scoutArmySize: number;
     retreatArmySize: number;
     attackArmySize:number;
+    attackRampUp: number;
     upgradeRatio:number;
     attackedDamageThreshold: number;
     maxMineDistance: number;

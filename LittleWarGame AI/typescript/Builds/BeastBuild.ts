@@ -20,6 +20,7 @@ class BeastBuild implements ZChipAI.IBuild{
   maxActiveMines: number;
   desiredActiveMines: number;
   minimumWorkers: number;
+  attackRampUp: number;
 
   private _scope: ZChipAPI.Scope;
   private _cache: ZChipAI.Cache;
@@ -41,6 +42,7 @@ class BeastBuild implements ZChipAI.IBuild{
     this.maxActiveMines = 3;
     this.desiredActiveMines = 1;
     this.minimumWorkers = 5
+    this.attackRampUp = 3;
   }
 
 
