@@ -1241,13 +1241,18 @@ module ZChipAI {
           }
         }
       }
-      else{
+
+      if(unorderedMines.length == 0){
         unorderedMines = this._cache.mines;
       }
 
       var lastLocation = this._scope.getStartPosition(this._scope.playerNumber);
       while(unorderedMines.length > 0){
         let nextMine: ZChipAPI.Mine = <ZChipAPI.Mine>this._scope.getClosestByGround(lastLocation.x, lastLocation.y, unorderedMines);
+        if(nextMine == null){
+          // If anything goes wrong ordering the mines, we're just going to search them all randomly.
+          return this._cache.mines;
+        }
         unorderedMines = unorderedMines.filter((m) => {
           return m.id != nextMine.id;
         })
