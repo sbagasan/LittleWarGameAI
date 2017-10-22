@@ -299,8 +299,6 @@ module ZChipAPI{
           return "Wolves Den";
         case BuildingType.Workshop:
           return "Workshop";
-        default:
-          throw "No mapping for building: " + type.toString();
       }
     }
 
@@ -371,8 +369,6 @@ module ZChipAPI{
           return "Wolf"
         case UnitType.Worker:
           return "Worker"
-        default:
-          throw "No mapping for unit: " + type.toString();
       }
     }
 
@@ -589,8 +585,6 @@ module ZChipAPI{
           return "Armor Upgrade";
         case OrderType.UpgradeAttack:
           return "Attack Upgrade";
-        default:
-          throw "No mapping for order: " + type.toString();
       }
     }
 
