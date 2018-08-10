@@ -204,22 +204,34 @@ module ZChipAPI{
           return UnitType.Ballista;
         case "Bird":
           return UnitType.Bird;
+        case "Caltrop":
+          return UnitType.Caltrop;
         case "Catapult":
           return UnitType.Catapult;
         case "Dragon":
           return UnitType.Dragon;
+        case "Gatling Gun":
+          return UnitType.GatlingGun;
         case "Healing Ward":
           return UnitType.HealingWard;
+        case "Knight":
+          return UnitType.Knight;
         case "Mage":
           return UnitType.Mage;
         case "Priest":
           return UnitType.Priest;
+        case "Raider":
+          return UnitType.Raider;
         case "Shadow Wolf":
           return UnitType.ShadowWolf;
+        case "Shroud Field":
+          return UnitType.ShroudField;
         case "Skeleton":
           return UnitType.Skeleton;
         case "Slowing Field":
           return UnitType.SlowField;
+        case "Snake":
+          return UnitType.Snake;
         case "Soldier":
           return UnitType.Soldier;
         case "Werewolf":
@@ -247,10 +259,18 @@ module ZChipAPI{
           return OrderType.TrainCatapult;
         case UnitType.Dragon:
           return OrderType.TrainDragon;
+        case UnitType.GatlingGun:
+          return OrderType.TrainGatlingGun;
+        case UnitType.Knight:
+          return OrderType.TrainKnight;
         case UnitType.Mage:
           return OrderType.TrainMage;
         case UnitType.Priest:
           return OrderType.TrainPriest;
+        case UnitType.Raider:
+          return OrderType.TrainRaider;
+        case UnitType.Snake:
+          return OrderType.TrainSnake;
         case UnitType.Soldier:
           return OrderType.TrainSoldier;
         case UnitType.Werewolf:
@@ -338,37 +358,49 @@ module ZChipAPI{
     static getUnitName(type: UnitType): string{
       switch (type){
         case UnitType.Airship:
-          return "Airship"
+          return "Airship";
         case UnitType.Archer:
-          return "Archer"
+          return "Archer";
         case UnitType.Ballista:
-          return "Ballista"
+          return "Ballista";
         case UnitType.Bird:
-          return "Bird"
+          return "Bird";
+        case UnitType.Caltrop:
+          return "Caltrop";
         case UnitType.Catapult:
-          return "Catapult"
+          return "Catapult";
         case UnitType.Dragon:
-          return "Dragon"
+          return "Dragon";
+        case UnitType.GatlingGun:
+          return "Gatling Gun";
         case UnitType.HealingWard:
           return "Healing Ward";
+        case UnitType.Knight:
+          return "Knight";
         case UnitType.Mage:
-          return "Mage"
+          return "Mage";
         case UnitType.Priest:
-          return "Priest"
+          return "Priest";
+        case UnitType.Raider:
+          return "Raider";
         case UnitType.ShadowWolf:
-          return "Shadow Wolf"
+          return "Shadow Wolf";
+        case UnitType.ShroudField:
+          return "Shroud Field";
         case UnitType.Skeleton:
-          return "Skeleton"
+          return "Skeleton";
         case UnitType.SlowField:
           return "Slowing Field";
+        case UnitType.Snake:
+          return "Snake";
         case UnitType.Soldier:
-          return "Soldier"
+          return "Soldier";
         case UnitType.Werewolf:
-          return "Werewolf"
+          return "Werewolf";
         case UnitType.Wolf:
-          return "Wolf"
+          return "Wolf";
         case UnitType.Worker:
-          return "Worker"
+          return "Worker";
       }
     }
 
@@ -430,10 +462,18 @@ module ZChipAPI{
           return OrderType.TrainCatapult;
         case "Train Dragon":
           return OrderType.TrainDragon;
+        case "Construct Gatling Gun":
+          return OrderType.TrainGatlingGun;
+        case "Train Knight":
+          return OrderType.TrainKnight;
         case "Train Mage":
           return OrderType.TrainMage;
         case "Train Priest":
           return OrderType.TrainPriest;
+        case "Train Raider":
+          return OrderType.TrainRaider;
+        case "Train Snake":
+          return OrderType.TrainSnake;
         case "Train Soldier":
           return OrderType.TrainSoldier;
         case "Train Werewolf":
@@ -569,10 +609,18 @@ module ZChipAPI{
           return "Construct Catapult";
         case OrderType.TrainDragon:
           return "Train Dragon";
+        case OrderType.TrainGatlingGun:
+          return "Construct Gatling Gun";
+        case OrderType.TrainKnight:
+          return "Train Knight";
         case OrderType.TrainMage:
           return "Train Mage";
         case OrderType.TrainPriest:
           return "Train Priest";
+        case OrderType.TrainRaider:
+          return "Train Raider";
+        case OrderType.TrainSnake:
+          return "Train Snake";
         case OrderType.TrainSoldier:
           return "Train Soldier";
         case OrderType.TrainWerewolf:
@@ -646,8 +694,12 @@ module ZChipAPI{
     TrainBird,
     TrainCatapult,
     TrainDragon,
+    TrainGatlingGun,
+    TrainKnight,
     TrainMage,
     TrainPriest,
+    TrainRaider,
+    TrainSnake,
     TrainSoldier,
     TrainWerewolf,
     TrainWolf,
@@ -681,15 +733,21 @@ module ZChipAPI{
     Airship,
     Archer,
     Ballista,
+    Caltrop,
     Bird,
     Catapult,
     Dragon,
+    GatlingGun,
     HealingWard,
+    Knight,
     Mage,
     Priest,
+    Raider,
     ShadowWolf,
+    ShroudField,
     Skeleton,
     SlowField,
+    Snake,
     Soldier,
     Werewolf,
     Wolf,
