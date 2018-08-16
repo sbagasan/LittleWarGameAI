@@ -823,7 +823,7 @@ module ZChipAI {
 
       for(let i = x - margin; i < x + size + margin; i++){
         for(let j = y - margin; j < y + size + margin; j++){
-          if(x < 0 || y < 0 || x >= this._scope.mapWidth || y > this._scope.mapHeight) {
+          if(i < 0 || j < 0 || i >= this._scope.mapWidth || j > this._scope.mapHeight) {
             return false;
           }
 
@@ -880,7 +880,7 @@ module ZChipAI {
           }
         }
       }
-
+      
       return true;
     }
 
@@ -956,7 +956,7 @@ module ZChipAI {
       return true;
     }
 
-    // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
+    // Attempts to build the specified building at a position. Returns true if success, otherwise false.
     buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType):boolean{
       var cost = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Cost);
       if(cost > this._scope.currentGold){
