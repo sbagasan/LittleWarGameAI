@@ -1033,17 +1033,21 @@ module ZChipAI {
     }
 
     // Executes the build orders as determined by the priority.
-    executeBuildOrders(priority: BuildAction[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedUpgrade: ZChipAPI.UpgradeType){
+    executeBuildOrders(priority: BuildPriorityItem[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedUpgrade: ZChipAPI.UpgradeType){
+      var disposableGold: number = this._scope.currentGold;
+      var cost: number;
       var buildingInProgress = false;
       if(this.getPendingBuildOrders().length > 0){
         buildingInProgress = true;
       }
 
       while(priority.length > 0){
-        let workOrder: BuildAction = priority.shift();
+        let workOrder: BuildPriorityItem = priority.shift();
 
-        switch(workOrder){
+        cost = 0;
+        switch(workOrder.buildAction){
           case BuildAction.Expand:
+            cost = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
             if(!buildingInProgress && expansionTarget != null){
               let buildingStarted = this.buildCastleNearGoldmine(expansionTarget, this._maxMineDistance);
 
@@ -1055,7 +1059,8 @@ module ZChipAI {
             break;
           case BuildAction.BuildWolfDen:
           case BuildAction.BuildBarracks:
-            let tierTwoBuildingType = ConstructionCommander.getBuildingTypeFromAction(workOrder);
+            let tierTwoBuildingType = ConstructionCommander.getBuildingTypeFromAction(workOrder.buildAction);
+            cost = this._scope.getBuildingTypeFieldValue(tierTwoBuildingType, ZChipAPI.TypeField.Cost);
             let completedHouses = this._cache.houses.filter(x => x.isUnderConstruction == false);
 
             if(!buildingInProgress && currentBase != null && completedHouses.length > 0){
@@ -1075,7 +1080,8 @@ module ZChipAI {
           case BuildAction.BuildHouse:
           case BuildAction.BuildWatchtower:
           case BuildAction.BuildWorkshop:
-            let buildingType = ConstructionCommander.getBuildingTypeFromAction(workOrder);
+            let buildingType = ConstructionCommander.getBuildingTypeFromAction(workOrder.buildAction);
+            cost = this._scope.getBuildingTypeFieldValue(buildingType, ZChipAPI.TypeField.Cost);
             if(!buildingInProgress && currentBase != null){
               let buildingStarted = this.buildBuildingNearBuilding(currentBase, buildingType);
 
@@ -1094,15 +1100,18 @@ module ZChipAI {
           case BuildAction.TrainCatapult:
           case BuildAction.TrainBallista:
           case BuildAction.TrainWerewolf:
+              let unitType = ConstructionCommander.getUnitTypeFromAction(workOrder.buildAction);
+              cost = this._scope.getUnitTypeFieldValue(unitType, ZChipAPI.TypeField.Cost);
               for(let i = 0; i < this._cache.unitProductionBuildings.length; i++){
                 let productionBuilding: ZChipAPI.ProductionBuilding = this._cache.unitProductionBuildings[i];
 
                 if(!productionBuilding.isBusy){
-                  productionBuilding.trainUnit(ConstructionCommander.getUnitTypeFromAction(workOrder));
+                  productionBuilding.trainUnit(unitType);
                 }
               }
               break;
           case BuildAction.UpgradeWolfDen:
+            cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.WerewolvesDenUpgrade, ZChipAPI.TypeField.Cost);
             for(let i = 0; i < this._cache.wolfDens.length; i++){
               let den = <ZChipAPI.ProductionBuilding>this._cache.wolfDens[i];
 
@@ -1112,6 +1121,7 @@ module ZChipAI {
               }
             }
           case BuildAction.ResearchFireball:
+            cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.FireballUpgrade, ZChipAPI.TypeField.Cost);
             for(let i = 0; i < this._cache.magesGuilds.length; i++){
               let guild = <ZChipAPI.ProductionBuilding>this._cache.magesGuilds[i];
 
@@ -1122,6 +1132,7 @@ module ZChipAI {
             }
             break;
           case BuildAction.BarracksUpgrades:
+            cost = this._scope.getUpgradeTypeFieldValue(prefferedUpgrade, ZChipAPI.TypeField.Cost);
             for(let i = 0; i < this._cache.forges.length; i++){
               let forge = <ZChipAPI.ProductionBuilding>this._cache.forges[i];
 
@@ -1131,6 +1142,14 @@ module ZChipAI {
               }
             }
           break;
+        }
+
+        if(cost > disposableGold && workOrder.saveUpFor)
+        {
+          return;
+        }
+        else{
+          disposableGold -= cost;
         }
       }
     }
@@ -1517,7 +1536,7 @@ module ZChipAI {
       var expansionTarget: ZChipAPI.Mine = this.economyCommander.considerExpansion(primaryBase);
 
       // Build Orders.
-      var constructionPriority: BuildAction[] = this.build.establishBuildPriority(expansionTarget, this.economyCommander.targetWorkerCount, this.economyCommander.disposableWorkers, this.constructionCommander.getUpgradesInProgress());
+      var constructionPriority: BuildPriorityItem[] = this.build.establishBuildPriority(expansionTarget, this.economyCommander.targetWorkerCount, this.economyCommander.disposableWorkers, this.constructionCommander.getUpgradesInProgress());
       this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedUpgrade);
       this.constructionCommander.rebuildAndRepair(this.economyCommander.disposableWorkers);
 
@@ -1556,6 +1575,16 @@ module ZChipAI {
     }
   }
 
+  export class BuildPriorityItem{
+    buildAction: BuildAction;
+    saveUpFor: boolean;
+
+    constructor(buildAction: BuildAction, saveUpFor: boolean){
+      this.buildAction = buildAction;
+      this.saveUpFor = saveUpFor;
+    }
+  }
+
   // A class with static values that determine the AI's behaviour.
   export interface IBuild{
     scoutArmySize: number;
@@ -1579,6 +1608,6 @@ module ZChipAI {
     setScope(scope: ZChipAPI.Scope, cache: Cache);
 
     // Establishes the priorities to build various units and buildings.
-    establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):BuildAction[];
+    establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):BuildPriorityItem[];
   }
 }

@@ -49,11 +49,11 @@ class TowerBuild implements ZChipAI.IBuild{
       this._cache = cache;
     }
   
-    establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):ZChipAI.BuildAction[]{
-      var priorityQueue: ZChipAI.BuildAction[] = [];
+    establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):ZChipAI.BuildPriorityItem[]{
+      var priorityQueue: ZChipAI.BuildPriorityItem[] = [];
       var workersAvailable: boolean = disposableWorkers > 0;
 
-      priorityQueue.push(ZChipAI.BuildAction.BuildWatchtower);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildWatchtower, false));
   
       return priorityQueue;
     }

@@ -49,96 +49,96 @@ class TestBuild implements ZChipAI.IBuild{
     this._cache = cache;
   }
 
-  establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):ZChipAI.BuildAction[]{
-    var priorityQueue: ZChipAI.BuildAction[] = [];
+  establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):ZChipAI.BuildPriorityItem[]{
+    var priorityQueue: ZChipAI.BuildPriorityItem[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
 
     if(this._cache.houses.length < 4){
-      priorityQueue.push(ZChipAI.BuildAction.BuildHouse);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildHouse,false));
     }
 
     if(this._cache.barracks.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildBarracks);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildBarracks,false));
     }
 
     if(this._cache.magesGuilds.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildMagesGuild);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildMagesGuild,false));
     }
 
     if(this._cache.workshops.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildWorkshop);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildWorkshop,false));
     }
 
     if(this._cache.advancedWorksops.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildAdvancedWorkshop);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildAdvancedWorkshop,false));
     }
 
     if(this._cache.churches.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildChurch);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildChurch,false));
     }
 
     if(this._cache.animalTestingLabs.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildAnimalTestingLab);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildAnimalTestingLab,false));
     }
 
     if(this._cache.wolfDens.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildWolfDen);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildWolfDen,false));
     }
 
     if(this._cache.forges.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildForge);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildForge,false));
     }
 
     if(this._cache.watchtowers.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.BuildWatchtower);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildWatchtower,false));
     }
 
     if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.FireballUpgrade) < 1){
-      priorityQueue.push(ZChipAI.BuildAction.ResearchFireball);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.ResearchFireball,false));
     }
 
     if(this._cache.werewolfDens.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.UpgradeWolfDen);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.UpgradeWolfDen,false));
     }
 
     if(this._cache.mages.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainMage);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainMage,false));
     }
 
     if(this._cache.wolves.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWolves);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainWolves,false));
     }
 
     if(this._cache.workers.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWorker);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainWorker,false));
     }
 
     if(this._cache.soldiers.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainSoldier);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainSoldier,false));
     }
 
     if(this._cache.archers.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainArcher);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainArcher,false));
     }
 
     if(this._cache.priests.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainPriest);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainPriest,false));
     }
 
     if(this._cache.birds.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainBird);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainBird,false));
     }
 
     if(this._cache.catapults.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainCatapult);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainCatapult,false));
     }
 
     if(this._cache.ballistae.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainBallista);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainBallista,false));
     }
 
     if(this._cache.werewolves.length < 1){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWerewolf);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainWerewolf,false));
     }
 
     return priorityQueue;

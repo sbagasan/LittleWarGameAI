@@ -49,32 +49,32 @@ class RaxBuild implements ZChipAI.IBuild{
     this._cache = cache;
   }
 
-  establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):ZChipAI.BuildAction[]{
-    var priorityQueue: ZChipAI.BuildAction[] = [];
+  establishBuildPriority(expansionTarget: ZChipAPI.Mine, desiredWorkers: number, disposableWorkers: number, upgradesInProgress: ZChipAPI.UpgradeType[]):ZChipAI.BuildPriorityItem[]{
+    var priorityQueue: ZChipAI.BuildPriorityItem[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
 
     if(expansionTarget != null && workersAvailable){
-      priorityQueue.push(ZChipAI.BuildAction.Expand);
-      return priorityQueue;
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.Expand, true));
     }
 
     if(this._scope.currentSupply + this.supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply < this._scope.supplyCap){
-      priorityQueue.push(ZChipAI.BuildAction.BuildHouse);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildHouse, false));
     }
 
     if(this._cache.workers.length < desiredWorkers){
-      priorityQueue.push(ZChipAI.BuildAction.TrainWorker);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainWorker, false));
     }
 
     if(this._cache.watchtowers.length < this._cache.castles.length * this.watchtowersPerCastle && workersAvailable){
-      priorityQueue.push(ZChipAI.BuildAction.BuildWatchtower);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildWatchtower, false));
     }
 
     if(this._cache.forges.length < 1 && this._cache.army.length > this.upgradeRatio && workersAvailable){
-      priorityQueue.push(ZChipAI.BuildAction.BuildForge);
-
       if(this._scope.currentGold < this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Forge, ZChipAPI.TypeField.Cost) && this._cache.army.length >= this._cache.enemyArmy.length){
-        return priorityQueue;
+        priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildForge, true));
+      }
+      else{
+        priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildForge, false));
       }
     }
 
@@ -82,23 +82,24 @@ class RaxBuild implements ZChipAI.IBuild{
     let armourUpgradLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades);
     // TODO: 5 is a magic number. Baaad.
     if(this._cache.forges.length > 0 && damageUpgradeLevel < 5 && armourUpgradLevel < 5 && this._cache.army.length / this.upgradeRatio > damageUpgradeLevel){
-      priorityQueue.push(ZChipAI.BuildAction.BarracksUpgrades);
-
       let upgradeCost = Math.max(this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.AttackUpgrades, ZChipAPI.TypeField.Cost)) + ((damageUpgradeLevel + armourUpgradLevel) * 60);
       if(upgradesInProgress.length < this._cache.forges.length && this._scope.currentGold < upgradeCost){
-        return priorityQueue;
+        priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BarracksUpgrades, true));
+      }
+      else{
+        priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BarracksUpgrades, false));
       }
     }
 
     if(this._cache.archers.length < this._cache.soldiers.length){
-      priorityQueue.push(ZChipAI.BuildAction.TrainArcher);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainArcher, false));
     }
     else{
-      priorityQueue.push(ZChipAI.BuildAction.TrainSoldier);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainSoldier, false));
     }
 
     if(workersAvailable){
-      priorityQueue.push(ZChipAI.BuildAction.BuildBarracks);
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildBarracks, false));
     }
 
     return priorityQueue;
