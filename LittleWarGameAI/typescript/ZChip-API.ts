@@ -117,7 +117,7 @@ module ZChipAPI{
         case "Research Fireball":
           return "upgfireball";
         default:
-          return typeName.toLowerCase().replace(" ","");
+          return typeName.toLowerCase().split(" ").join("");
       }
     }
 
