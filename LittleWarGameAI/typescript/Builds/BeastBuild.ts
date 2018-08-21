@@ -7,12 +7,10 @@ class BeastBuild implements ZChipAI.IBuild{
   scoutArmySize : number;
   retreatArmySize: number;
   attackArmySize:number;
-  upgradeRatio:number;
   attackedDamageThreshold: number;
   maxMineDistance: number;
   maxWorkersPerGoldmine:number;
   baseSpacing: number;
-  watchtowersPerCastle: number;
   supplyBuffer: number;
   workerAttackDistance: number;
   workerAttackRatio: number;
@@ -28,12 +26,10 @@ class BeastBuild implements ZChipAI.IBuild{
     this.scoutArmySize = 1;
     this.retreatArmySize = 4;
     this.attackArmySize = 5;
-    this.upgradeRatio = 3;
     this.attackedDamageThreshold = 8;
     this.maxMineDistance =15;
     this.maxWorkersPerGoldmine = 10;
     this.baseSpacing = 2;
-    this.watchtowersPerCastle = 0;
     this.supplyBuffer = 6;
     this.workerAttackDistance = 15;
     this.workerAttackRatio = 1.5;

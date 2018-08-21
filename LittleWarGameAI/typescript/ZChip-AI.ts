@@ -3,32 +3,38 @@
 module ZChipAI {
   // The possible actions that can be taken by the construction commander.
   export enum BuildAction{
-    Expand,
     BuildAdvancedWorkshop,
     BuildAnimalTestingLab,
     BuildBarracks,
     BuildChurch,
     BuildDragonsLair,
     BuildForge,
-    BuildMagesGuild,
     BuildHouse,
+    BuildMagesGuild,
     BuildWatchtower,
-    BuildWorkshop,
     BuildWolfDen,
+    BuildWorkshop,
     ResearchFireball,
-    TrainWorker,
-    TrainSoldier,
+    TrainAirship,
     TrainArcher,
-    TrainWolves,
-    TrainMage,
-    TrainPriest,
     TrainBallista,
     TrainBird,
     TrainCatapult,
+    TrainDragon,
+    TrainGatlingGun,
+    TrainKnight,
+    TrainMage,
+    TrainPriest,
+    TrainRaider,
+    TrainSnake,
+    TrainSoldier,
     TrainWerewolf,
+    TrainWolves,
+    TrainWorker,
     UpgradeArmour,
     UpgradeAttack,
-    UpgradeWolfDen
+    UpgradeWolfDen,
+    Expand
   }
 
   // Provides access to cached copies of scope data.
@@ -682,9 +688,6 @@ module ZChipAI {
     // The minimum spacing around non castle buildings.
     private _baseSpacing: number;
 
-    // The number of watchtowers to build for each castle the player owns.
-    private _watchtowersPerCastle: number;
-
     // The maximum diameter around the AIs base that it will try to build in.
     private _maxBaseSize: number;
 
@@ -729,26 +732,38 @@ module ZChipAI {
 
     private static getUnitTypeFromAction(action: BuildAction): ZChipAPI.UnitType{
       switch(action){
-        case BuildAction.TrainMage:
-          return ZChipAPI.UnitType.Mage;
-        case BuildAction.TrainBird:
-          return ZChipAPI.UnitType.Bird;
-        case BuildAction.TrainWorker:
-          return ZChipAPI.UnitType.Worker;
-        case BuildAction.TrainWolves:
-          return ZChipAPI.UnitType.Wolf;
-        case BuildAction.TrainPriest:
-          return ZChipAPI.UnitType.Priest;
-        case BuildAction.TrainSoldier:
-          return ZChipAPI.UnitType.Soldier;
+        case BuildAction.TrainAirship:
+          return ZChipAPI.UnitType.Airship;
         case BuildAction.TrainArcher:
           return ZChipAPI.UnitType.Archer;
         case BuildAction.TrainBallista:
           return ZChipAPI.UnitType.Ballista;
+        case BuildAction.TrainBird:
+          return ZChipAPI.UnitType.Bird;
         case BuildAction.TrainCatapult:
           return ZChipAPI.UnitType.Catapult;
+        case BuildAction.TrainDragon:
+          return ZChipAPI.UnitType.Dragon;
+        case BuildAction.TrainGatlingGun:
+          return ZChipAPI.UnitType.GatlingGun;
+        case BuildAction.TrainKnight:
+          return ZChipAPI.UnitType.Knight;
+        case BuildAction.TrainMage:
+          return ZChipAPI.UnitType.Mage;
+        case BuildAction.TrainPriest:
+          return ZChipAPI.UnitType.Priest;
+        case BuildAction.TrainRaider:
+          return ZChipAPI.UnitType.Raider;
+        case BuildAction.TrainSnake:
+          return ZChipAPI.UnitType.Snake;
+        case BuildAction.TrainSoldier:
+          return ZChipAPI.UnitType.Soldier;
         case BuildAction.TrainWerewolf:
           return ZChipAPI.UnitType.Werewolf;
+        case BuildAction.TrainWolves:
+          return ZChipAPI.UnitType.Wolf;
+        case BuildAction.TrainWorker:
+          return ZChipAPI.UnitType.Worker;
       }
     }
 
@@ -1053,16 +1068,22 @@ module ZChipAI {
           var watchtowers = this._scope.getBuildings({type:watchtowerType}).length;
           cost = this._scope.getBuildingTypeFieldValue(watchtowerType, ZChipAPI.TypeField.Cost) + (25 * watchtowers); //TODO: 25 is a magic number:baad.
           break;
-        case BuildAction.TrainWorker:
-        case BuildAction.TrainSoldier:
+        case BuildAction.TrainAirship:
         case BuildAction.TrainArcher:
-        case BuildAction.TrainWolves:
-        case BuildAction.TrainMage:
-        case BuildAction.TrainPriest:
+        case BuildAction.TrainBallista:
         case BuildAction.TrainBird:
         case BuildAction.TrainCatapult:
-        case BuildAction.TrainBallista:
+        case BuildAction.TrainDragon:
+        case BuildAction.TrainGatlingGun:
+        case BuildAction.TrainKnight:
+        case BuildAction.TrainMage:
+        case BuildAction.TrainPriest:
+        case BuildAction.TrainRaider:
+        case BuildAction.TrainSnake:
+        case BuildAction.TrainSoldier:
         case BuildAction.TrainWerewolf:
+        case BuildAction.TrainWolves:
+        case BuildAction.TrainWorker:
           let unitType = ConstructionCommander.getUnitTypeFromAction(action);
           cost = this._scope.getUnitTypeFieldValue(unitType, ZChipAPI.TypeField.Cost);
           break;
@@ -1147,16 +1168,22 @@ module ZChipAI {
               }
             }
             break;
-          case BuildAction.TrainWorker:
-          case BuildAction.TrainSoldier:
-          case BuildAction.TrainArcher:
-          case BuildAction.TrainWolves:
-          case BuildAction.TrainMage:
-          case BuildAction.TrainPriest:
-          case BuildAction.TrainBird:
-          case BuildAction.TrainCatapult:
-          case BuildAction.TrainBallista:
-          case BuildAction.TrainWerewolf:
+            case BuildAction.TrainAirship:
+            case BuildAction.TrainArcher:
+            case BuildAction.TrainBallista:
+            case BuildAction.TrainBird:
+            case BuildAction.TrainCatapult:
+            case BuildAction.TrainDragon:
+            case BuildAction.TrainGatlingGun:
+            case BuildAction.TrainKnight:
+            case BuildAction.TrainMage:
+            case BuildAction.TrainPriest:
+            case BuildAction.TrainRaider:
+            case BuildAction.TrainSnake:
+            case BuildAction.TrainSoldier:
+            case BuildAction.TrainWerewolf:
+            case BuildAction.TrainWolves:
+            case BuildAction.TrainWorker:
               let unitType = ConstructionCommander.getUnitTypeFromAction(workOrder.buildAction);
               let producerType = this._scope.getProducer(unitType);
 
@@ -1221,10 +1248,9 @@ module ZChipAI {
       }
     }
 
-    constructor(baseSpacing: number, watchtowersPerCastle: number, supplyBuffer: number, maxMineDistance: number){
+    constructor(baseSpacing: number, supplyBuffer: number, maxMineDistance: number){
       super();
       this._baseSpacing = baseSpacing;
-      this._watchtowersPerCastle = watchtowersPerCastle;
       this._supplyBuffer = supplyBuffer;
       this._maxMineDistance = maxMineDistance;
       this._lastBuildSite = null;
@@ -1629,7 +1655,7 @@ module ZChipAI {
       this.build = build;
       this.combatCommander = new CombatCommander();
       this.economyCommander = new EconomyCommander(this.build.maxMineDistance, this.build.maxWorkersPerGoldmine, this.build.maxActiveMines, this.build.desiredActiveMines, this.build.minimumWorkers);
-      this.constructionCommander =  new  ConstructionCommander(this.build.baseSpacing, this.build.watchtowersPerCastle, this.build.supplyBuffer, this.build.maxMineDistance);
+      this.constructionCommander =  new  ConstructionCommander(this.build.baseSpacing, this.build.supplyBuffer, this.build.maxMineDistance);
     }
   }
 
@@ -1648,12 +1674,10 @@ module ZChipAI {
     scoutArmySize: number;
     retreatArmySize: number;
     attackArmySize:number;
-    upgradeRatio:number;
     attackedDamageThreshold: number;
     maxMineDistance: number;
     maxWorkersPerGoldmine:number;
     baseSpacing: number;
-    watchtowersPerCastle: number;
     supplyBuffer: number;
     workerAttackDistance: number;
     workerAttackRatio: number;

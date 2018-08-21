@@ -12,7 +12,6 @@ class RaxBuild implements ZChipAI.IBuild{
   maxMineDistance: number;
   maxWorkersPerGoldmine:number;
   baseSpacing: number;
-  watchtowersPerCastle: number;
   supplyBuffer: number;
   workerAttackDistance: number;
   workerAttackRatio: number;
@@ -33,7 +32,6 @@ class RaxBuild implements ZChipAI.IBuild{
     this.maxMineDistance =15;
     this.maxWorkersPerGoldmine = 10;
     this.baseSpacing = 1;
-    this.watchtowersPerCastle = 0;
     this.supplyBuffer = 6;
     this.workerAttackDistance = 15;
     this.workerAttackRatio = 1.5;
@@ -66,10 +64,6 @@ class RaxBuild implements ZChipAI.IBuild{
 
     if(this._cache.workers.length < desiredWorkers){
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainWorker, false));
-    }
-
-    if(this._cache.watchtowers.length < this._cache.castles.length * this.watchtowersPerCastle && workersAvailable){
-      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildWatchtower, false));
     }
 
     if(this._cache.forges.length < 1 && this._cache.army.length > this.upgradeRatio && workersAvailable){

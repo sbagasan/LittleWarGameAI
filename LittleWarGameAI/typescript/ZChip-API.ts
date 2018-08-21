@@ -773,8 +773,11 @@ module ZChipAPI{
           // TODO: or fortress.
         case UnitType.Soldier:
         case UnitType.Archer:
+        case UnitType.Knight:
+        case UnitType.Raider:
           return BuildingType.Barracks;
         case UnitType.Wolf:
+        case UnitType.Snake:
           return BuildingType.WolvesDen;
           //TODO: or werewolves den.
         case UnitType.Mage:
@@ -782,8 +785,11 @@ module ZChipAPI{
         case UnitType.Priest:
           return BuildingType.Church;
         case UnitType.Catapult:
-        case UnitType.Ballista:
+        case UnitType.GatlingGun:
           return BuildingType.Workshop;
+        case UnitType.Ballista:
+        case UnitType.Airship:
+          return BuildingType.AdvancedWorkshop;
         case UnitType.Werewolf:
           return BuildingType.WerewolvesDen;
       }

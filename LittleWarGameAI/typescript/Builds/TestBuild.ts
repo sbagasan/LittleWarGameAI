@@ -7,12 +7,10 @@ class TestBuild implements ZChipAI.IBuild{
   scoutArmySize: number;
   retreatArmySize: number;
   attackArmySize:number;
-  upgradeRatio:number;
   attackedDamageThreshold: number;
   maxMineDistance: number;
   maxWorkersPerGoldmine:number;
   baseSpacing: number;
-  watchtowersPerCastle: number;
   supplyBuffer: number;
   workerAttackDistance: number;
   workerAttackRatio: number;
@@ -28,12 +26,10 @@ class TestBuild implements ZChipAI.IBuild{
     this.scoutArmySize = 2;
     this.retreatArmySize = 2;
     this.attackArmySize = 5;
-    this.upgradeRatio = 3;
     this.attackedDamageThreshold = 15;
     this.maxMineDistance =15;
     this.maxWorkersPerGoldmine = 10;
     this.baseSpacing = 2;
-    this.watchtowersPerCastle = 0;
     this.supplyBuffer = 6;
     this.workerAttackDistance = 15;
     this.workerAttackRatio = 1.5;
@@ -53,7 +49,11 @@ class TestBuild implements ZChipAI.IBuild{
     var priorityQueue: ZChipAI.BuildPriorityItem[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
 
-    if(this._cache.houses.length < 4){
+    if(this._cache.workers.length < 12){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainWorker,false));
+    }
+
+    if(this._cache.houses.length < 5){
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildHouse,false));
     }
 
@@ -131,6 +131,14 @@ class TestBuild implements ZChipAI.IBuild{
 
     if(this._cache.catapults.length < 1){
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainCatapult,false));
+    }
+
+    if(this._scope.getUnits({type: ZChipAPI.UnitType.GatlingGun}).length < 1){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainGatlingGun,false));
+    }
+
+    if(this._scope.getUnits({type: ZChipAPI.UnitType.Raider}).length < 1){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainRaider,false));
     }
 
     if(this._cache.ballistae.length < 1){
