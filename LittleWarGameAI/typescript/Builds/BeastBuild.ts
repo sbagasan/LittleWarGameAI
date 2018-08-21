@@ -62,12 +62,12 @@ class BeastBuild implements ZChipAI.IBuild{
     if(
         this._cache.houses.length < 1
         || (
-          this._scope.currentSupply + this.supplyBuffer >= this._scope.maxAvailableSupply
+          this._scope.currentSupply + this.supplyBuffer >= this._scope.projectedAvailableSupply
           && this._scope.maxAvailableSupply < this._scope.supplyCap
           && (this._cache.wolfDens.length + this._cache.werewolfDens.length) > 0
         )
       ){
-      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildHouse,false));
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildHouse,true));
     }
 
     if(this._cache.workers.length < desiredWorkers){

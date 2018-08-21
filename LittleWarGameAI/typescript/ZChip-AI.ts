@@ -15,7 +15,6 @@ module ZChipAI {
     BuildWatchtower,
     BuildWorkshop,
     BuildWolfDen,
-    BarracksUpgrades,
     ResearchFireball,
     TrainWorker,
     TrainSoldier,
@@ -27,6 +26,8 @@ module ZChipAI {
     TrainBird,
     TrainCatapult,
     TrainWerewolf,
+    UpgradeArmour,
+    UpgradeAttack,
     UpgradeWolfDen
   }
 
@@ -906,11 +907,6 @@ module ZChipAI {
 
     // Attpmts to build the specified building at a position. Returns true if success, otherwise false.
     buildCastleNearGoldmine(goldmine: ZChipAPI.Building, maxMineDistance: number):boolean{
-      var cost = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
-      if(cost > this._scope.currentGold){
-        return false;
-      }
-
       // Not using cache, because worker orders may have changed.
       var nonBuildingWorkers: ZChipAPI.Worker[] = [];
       for(var i = 0; i < this._cache.workers.length; i++){
@@ -958,11 +954,6 @@ module ZChipAI {
 
     // Attempts to build the specified building at a position. Returns true if success, otherwise false.
     buildBuildingNearBuilding(baseBuilding: ZChipAPI.Building, type: ZChipAPI.BuildingType):boolean{
-      var cost = this._scope.getBuildingTypeFieldValue(type, ZChipAPI.TypeField.Cost);
-      if(cost > this._scope.currentGold){
-        return false;
-      }
-
       // Not using cache, because worker orders may have changed.
       var nonBuildingWorkers: ZChipAPI.Worker[] = [];
       for(var i = 0; i < this._cache.workers.length; i++){
@@ -1032,26 +1023,94 @@ module ZChipAI {
       return upgrades;
     }
 
+    getBuildActionCost(action : BuildAction):number{
+      var cost: number;
+      cost = 0;
+      
+      let damageUpgradeLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades);
+      let armourUpgradLevel = this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades);
+
+      switch(action){
+        case BuildAction.Expand:
+          let castleType = ZChipAPI.BuildingType.Castle;
+          cost = this._scope.getBuildingTypeFieldValue(castleType, ZChipAPI.TypeField.Cost);
+          break;
+        case BuildAction.BuildWolfDen:
+        case BuildAction.BuildBarracks:
+        case BuildAction.BuildAdvancedWorkshop:
+        case BuildAction.BuildAnimalTestingLab:
+        case BuildAction.BuildChurch:
+        case BuildAction.BuildDragonsLair:
+        case BuildAction.BuildForge:
+        case BuildAction.BuildMagesGuild:
+        case BuildAction.BuildHouse:
+        case BuildAction.BuildWorkshop:
+          let buildingType = ConstructionCommander.getBuildingTypeFromAction(action);
+          cost = this._scope.getBuildingTypeFieldValue(buildingType, ZChipAPI.TypeField.Cost);
+          break;
+        case BuildAction.BuildWatchtower:
+          let watchtowerType = ConstructionCommander.getBuildingTypeFromAction(action);
+          var watchtowers = this._scope.getBuildings({type:watchtowerType}).length;
+          cost = this._scope.getBuildingTypeFieldValue(watchtowerType, ZChipAPI.TypeField.Cost) + (25 * watchtowers); //TODO: 25 is a magic number:baad.
+          break;
+        case BuildAction.TrainWorker:
+        case BuildAction.TrainSoldier:
+        case BuildAction.TrainArcher:
+        case BuildAction.TrainWolves:
+        case BuildAction.TrainMage:
+        case BuildAction.TrainPriest:
+        case BuildAction.TrainBird:
+        case BuildAction.TrainCatapult:
+        case BuildAction.TrainBallista:
+        case BuildAction.TrainWerewolf:
+          let unitType = ConstructionCommander.getUnitTypeFromAction(action);
+          cost = this._scope.getUnitTypeFieldValue(unitType, ZChipAPI.TypeField.Cost);
+          break;
+        case BuildAction.UpgradeWolfDen:
+          cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.WerewolvesDenUpgrade, ZChipAPI.TypeField.Cost);
+          break;
+        case BuildAction.UpgradeAttack:
+          cost = Math.max(this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.AttackUpgrades, ZChipAPI.TypeField.Cost)) + ((damageUpgradeLevel + armourUpgradLevel) * 60);
+          break;
+        case BuildAction.UpgradeArmour:
+          cost = Math.max(this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.ArmourUpgrades, ZChipAPI.TypeField.Cost)) + ((damageUpgradeLevel + armourUpgradLevel) * 60);
+          break;
+        case BuildAction.ResearchFireball:
+          cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.FireballUpgrade, ZChipAPI.TypeField.Cost);
+          break;
+      }
+      return cost;
+    }
+
     // Executes the build orders as determined by the priority.
-    executeBuildOrders(priority: BuildPriorityItem[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building, prefferedUpgrade: ZChipAPI.UpgradeType){
+    executeBuildOrders(priority: BuildPriorityItem[], expansionTarget: ZChipAPI.Mine, currentBase:ZChipAPI.Building){
       var disposableGold: number = this._scope.currentGold;
       var cost: number;
-      var buildingInProgress = false;
+      var buildingInProgress :boolean= false;
+      var actionSucceeded :boolean;
       if(this.getPendingBuildOrders().length > 0){
         buildingInProgress = true;
       }
 
       while(priority.length > 0){
         let workOrder: BuildPriorityItem = priority.shift();
+        actionSucceeded = false;
+        debugger;
 
-        cost = 0;
+        cost = this.getBuildActionCost(workOrder.buildAction);
+        if(cost > disposableGold && workOrder.saveUpFor){
+          return;
+        }
+        else if(cost > disposableGold){
+          continue;
+        }
+
         switch(workOrder.buildAction){
-          case BuildAction.Expand:
-            cost = this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Castle, ZChipAPI.TypeField.Cost);
+          case BuildAction.Expand:            
             if(!buildingInProgress && expansionTarget != null){
-              let buildingStarted = this.buildCastleNearGoldmine(expansionTarget, this._maxMineDistance);
+              actionSucceeded = this.buildCastleNearGoldmine(expansionTarget, this._maxMineDistance);
 
-              if(buildingStarted){
+              if(actionSucceeded){
                 buildingInProgress = true;
                 this._scope.chatMessage("General Z is thinking: A man's home is his castle.");
               }
@@ -1059,14 +1118,13 @@ module ZChipAI {
             break;
           case BuildAction.BuildWolfDen:
           case BuildAction.BuildBarracks:
-            let tierTwoBuildingType = ConstructionCommander.getBuildingTypeFromAction(workOrder.buildAction);
-            cost = this._scope.getBuildingTypeFieldValue(tierTwoBuildingType, ZChipAPI.TypeField.Cost);
+            let tierTwoBuildingType = ConstructionCommander.getBuildingTypeFromAction(workOrder.buildAction);            
             let completedHouses = this._cache.houses.filter(x => x.isUnderConstruction == false);
 
             if(!buildingInProgress && currentBase != null && completedHouses.length > 0){
-              let buildingStarted = this.buildBuildingNearBuilding(currentBase, tierTwoBuildingType);
+              actionSucceeded = this.buildBuildingNearBuilding(currentBase, tierTwoBuildingType);
 
-              if(buildingStarted){
+              if(actionSucceeded){
                 buildingInProgress = true;
               }
             }
@@ -1081,11 +1139,10 @@ module ZChipAI {
           case BuildAction.BuildWatchtower:
           case BuildAction.BuildWorkshop:
             let buildingType = ConstructionCommander.getBuildingTypeFromAction(workOrder.buildAction);
-            cost = this._scope.getBuildingTypeFieldValue(buildingType, ZChipAPI.TypeField.Cost);
             if(!buildingInProgress && currentBase != null){
-              let buildingStarted = this.buildBuildingNearBuilding(currentBase, buildingType);
+              actionSucceeded = this.buildBuildingNearBuilding(currentBase, buildingType);
 
-              if(buildingStarted){
+              if(actionSucceeded){
                 buildingInProgress = true;
               }
             }
@@ -1101,54 +1158,64 @@ module ZChipAI {
           case BuildAction.TrainBallista:
           case BuildAction.TrainWerewolf:
               let unitType = ConstructionCommander.getUnitTypeFromAction(workOrder.buildAction);
-              cost = this._scope.getUnitTypeFieldValue(unitType, ZChipAPI.TypeField.Cost);
-              for(let i = 0; i < this._cache.unitProductionBuildings.length; i++){
-                let productionBuilding: ZChipAPI.ProductionBuilding = this._cache.unitProductionBuildings[i];
+              let producerType = this._scope.getProducer(unitType);
 
-                if(!productionBuilding.isBusy){
-                  productionBuilding.trainUnit(unitType);
+              let productionBuildings = this._cache.unitProductionBuildings;
+              for(let i = 0; i < productionBuildings.length; i++){
+                let productionBuilding = productionBuildings[i];
+
+                if(productionBuilding.type == producerType && !productionBuilding.isBusy){
+                  actionSucceeded = productionBuilding.trainUnit(unitType);
+
+                  if(actionSucceeded){
+                    break;
+                  }
                 }
               }
               break;
           case BuildAction.UpgradeWolfDen:
-            cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.WerewolvesDenUpgrade, ZChipAPI.TypeField.Cost);
             for(let i = 0; i < this._cache.wolfDens.length; i++){
               let den = <ZChipAPI.ProductionBuilding>this._cache.wolfDens[i];
 
-              if(!den.isUnderConstruction && !den.isBusy){
-                den.researchUpgrade(ZChipAPI.UpgradeType.WerewolvesDenUpgrade);
-                break;
-              }
-            }
-          case BuildAction.ResearchFireball:
-            cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.FireballUpgrade, ZChipAPI.TypeField.Cost);
-            for(let i = 0; i < this._cache.magesGuilds.length; i++){
-              let guild = <ZChipAPI.ProductionBuilding>this._cache.magesGuilds[i];
-
-              if(!guild.isBusy){
-                guild.researchUpgrade(ZChipAPI.UpgradeType.FireballUpgrade);
+              if(!den.isBusy){
+                actionSucceeded = den.researchUpgrade(ZChipAPI.UpgradeType.WerewolvesDenUpgrade);
                 break;
               }
             }
             break;
-          case BuildAction.BarracksUpgrades:
-            cost = this._scope.getUpgradeTypeFieldValue(prefferedUpgrade, ZChipAPI.TypeField.Cost);
+          case BuildAction.ResearchFireball:
+            for(let i = 0; i < this._cache.magesGuilds.length; i++){
+              let guild = <ZChipAPI.ProductionBuilding>this._cache.magesGuilds[i];
+
+              if(!guild.isBusy){
+                actionSucceeded = guild.researchUpgrade(ZChipAPI.UpgradeType.FireballUpgrade);
+                break;
+              }
+            }
+            break;
+          case BuildAction.UpgradeAttack:
             for(let i = 0; i < this._cache.forges.length; i++){
               let forge = <ZChipAPI.ProductionBuilding>this._cache.forges[i];
 
               if(!forge.isBusy){
-                forge.researchUpgrade(prefferedUpgrade);
+                actionSucceeded = forge.researchUpgrade(ZChipAPI.UpgradeType.AttackUpgrades);
                 break;
               }
             }
-          break;
+            break;
+          case BuildAction.UpgradeArmour:
+            for(let i = 0; i < this._cache.forges.length; i++){
+              let forge = <ZChipAPI.ProductionBuilding>this._cache.forges[i];
+
+              if(!forge.isBusy){
+                actionSucceeded = forge.researchUpgrade(ZChipAPI.UpgradeType.ArmourUpgrades);
+                break;
+              }
+            }
+            break;
         }
 
-        if(cost > disposableGold && workOrder.saveUpFor)
-        {
-          return;
-        }
-        else{
+        if(actionSucceeded || workOrder.saveUpFor){
           disposableGold -= cost;
         }
       }
@@ -1205,15 +1272,6 @@ module ZChipAI {
 
 
       return this._cache.mines;
-    }
-
-    get prefferedUpgrade(): ZChipAPI.UpgradeType{
-      if(this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.AttackUpgrades) > this._scope.getUpgradeLevel(ZChipAPI.UpgradeType.ArmourUpgrades)){
-        return ZChipAPI.UpgradeType.ArmourUpgrades;
-      }
-      else{
-        return ZChipAPI.UpgradeType.AttackUpgrades;
-      }
     }
 
     // A function that takes in a list of units, and a dictionary of their hit points last AI cycle and determines which of them has been attacked.
@@ -1537,7 +1595,7 @@ module ZChipAI {
 
       // Build Orders.
       var constructionPriority: BuildPriorityItem[] = this.build.establishBuildPriority(expansionTarget, this.economyCommander.targetWorkerCount, this.economyCommander.disposableWorkers, this.constructionCommander.getUpgradesInProgress());
-      this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase, this.combatCommander.prefferedUpgrade);
+      this.constructionCommander.executeBuildOrders(constructionPriority, expansionTarget, primaryBase);
       this.constructionCommander.rebuildAndRepair(this.economyCommander.disposableWorkers);
 
       // Combat Orders.

@@ -57,8 +57,11 @@ class RaxBuild implements ZChipAI.IBuild{
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.Expand, true));
     }
 
-    if(this._scope.currentSupply + this.supplyBuffer >= this._scope.maxAvailableSupply && this._scope.maxAvailableSupply < this._scope.supplyCap){
-      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildHouse, false));
+    if(this._scope.currentSupply + this.supplyBuffer >= this._scope.projectedAvailableSupply && this._scope.maxAvailableSupply < this._scope.supplyCap){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildHouse, true));
+    }
+    else if(this._cache.houses.length < 1){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildHouse, false))
     }
 
     if(this._cache.workers.length < desiredWorkers){
@@ -70,7 +73,7 @@ class RaxBuild implements ZChipAI.IBuild{
     }
 
     if(this._cache.forges.length < 1 && this._cache.army.length > this.upgradeRatio && workersAvailable){
-      if(this._scope.currentGold < this._scope.getBuildingTypeFieldValue(ZChipAPI.BuildingType.Forge, ZChipAPI.TypeField.Cost) && this._cache.army.length >= this._cache.enemyArmy.length){
+      if(this._cache.army.length >= this._cache.enemyArmy.length){
         priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildForge, true));
       }
       else{
@@ -83,11 +86,16 @@ class RaxBuild implements ZChipAI.IBuild{
     // TODO: 5 is a magic number. Baaad.
     if(this._cache.forges.length > 0 && damageUpgradeLevel < 5 && armourUpgradLevel < 5 && this._cache.army.length / this.upgradeRatio > damageUpgradeLevel){
       let upgradeCost = Math.max(this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.AttackUpgrades, ZChipAPI.TypeField.Cost)) + ((damageUpgradeLevel + armourUpgradLevel) * 60);
-      if(upgradesInProgress.length < this._cache.forges.length && this._scope.currentGold < upgradeCost){
-        priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BarracksUpgrades, true));
+      let preferredUpgrade: ZChipAI.BuildAction;
+      if(damageUpgradeLevel > armourUpgradLevel) {
+        preferredUpgrade =ZChipAI.BuildAction.UpgradeArmour;
       }
       else{
-        priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BarracksUpgrades, false));
+        preferredUpgrade = ZChipAI.BuildAction.UpgradeAttack;
+      }
+
+      if(upgradesInProgress.length < this._cache.forges.length){
+        priorityQueue.push(new ZChipAI.BuildPriorityItem(preferredUpgrade, true));
       }
     }
 
