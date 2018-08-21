@@ -1,7 +1,14 @@
+///<reference path="./typescript/LWG-API.ts" />
+///<reference path="./typescript/ZChip-API.ts" />
+///<reference path="./typescript/ZChip-AI.ts" />
+///<reference path="./typescript/builds/TestBuild.ts" />
+///<reference path="./typescript/builds/RaxBuild.ts" />
+///<reference path="./typescript/builds/BeastBuild.ts" />
+
+var scope :LWG.IScope;
 if(this.init == undefined){
   this.init = true;
-  // Paste compiled javascript here.
-  this.grandCommander = new ZChipAI.GrandCommander(new TestBuild());
+  this.grandCommander = new ZChipAI.GrandCommander(new RaxBuild());
   this.cycle = function(scope){
     var superScope = new ZChipAPI.Scope(scope);
     var cache = new ZChipAI.Cache(superScope);
