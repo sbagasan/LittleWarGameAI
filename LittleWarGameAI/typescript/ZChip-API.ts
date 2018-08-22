@@ -444,6 +444,8 @@ module ZChipAPI{
           return OrderType.Repair;
         case "Research Fireball":
           return OrderType.ResearchFireball;
+        case "Upgrade To Fortress":
+          OrderType.UpgradeToFortress;
         case "Upgrade To Werewolves Den":
           return OrderType.UpgradeToWerewolvesDen;
         case "Stop":
@@ -499,6 +501,8 @@ module ZChipAPI{
           return UpgradeType.ArmourUpgrades;
         case OrderType.ResearchFireball:
           return UpgradeType.FireballUpgrade;
+        case OrderType.UpgradeToFortress:
+          return UpgradeType.FortressUpgrade;
         case OrderType.UpgradeToWerewolvesDen:
           return UpgradeType.WerewolvesDenUpgrade;
         default:
@@ -514,6 +518,8 @@ module ZChipAPI{
           return OrderType.UpgradeArmour;
         case UpgradeType.FireballUpgrade:
           return OrderType.ResearchFireball;
+        case UpgradeType.FortressUpgrade:
+          return OrderType.UpgradeToFortress;
         case UpgradeType.WerewolvesDenUpgrade:
           return OrderType.UpgradeToWerewolvesDen;
         default:
@@ -529,8 +535,10 @@ module ZChipAPI{
           return "Armor";
         case UpgradeType.FireballUpgrade:
           return "Research Fireball";
+        case UpgradeType.FortressUpgrade:
+          return "Fortress";
         case UpgradeType.WerewolvesDenUpgrade:
-          return "Werewolves Den"
+          return "Werewolves Den";
         default:
           throw "No mapping for upgrade type:" + UpgradeType.toString();
       }
@@ -546,6 +554,8 @@ module ZChipAPI{
           return UpgradeType.FireballUpgrade;
         case "Werewolves Den":
           return UpgradeType.WerewolvesDenUpgrade;
+        case "Fortress":
+          return UpgradeType.FortressUpgrade;
         default:
           return null;
       }
@@ -591,6 +601,8 @@ module ZChipAPI{
           return "Repair";
         case OrderType.ResearchFireball:
           return "Research Fireball";
+        case OrderType.UpgradeToFortress:
+          return "Upgrade To Fortress";
         case OrderType.UpgradeToWerewolvesDen:
           return "Upgrade To Werewolves Den";
         case OrderType.Stop:
@@ -658,7 +670,8 @@ module ZChipAPI{
     AttackUpgrades,
     ArmourUpgrades,
     FireballUpgrade,
-    WerewolvesDenUpgrade
+    WerewolvesDenUpgrade,
+    FortressUpgrade
   }
 
   export enum TypeField{
@@ -691,6 +704,7 @@ module ZChipAPI{
     MoveTo,
     Repair,
     ResearchFireball,
+    UpgradeToFortress,
     UpgradeToWerewolvesDen,
     Smash,
     Stop,

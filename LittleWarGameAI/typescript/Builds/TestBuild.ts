@@ -49,6 +49,10 @@ class TestBuild implements ZChipAI.IBuild{
     var priorityQueue: ZChipAI.BuildPriorityItem[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
 
+    if(this._scope.getUnits({type: ZChipAPI.BuildingType.Fortress}).length < 1){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.UpgradeCastle,true));
+    }
+
     if(this._cache.workers.length < 12){
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainWorker,false));
     }

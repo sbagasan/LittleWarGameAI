@@ -33,6 +33,7 @@ module ZChipAI {
     TrainWorker,
     UpgradeArmour,
     UpgradeAttack,
+    UpgradeCastle,
     UpgradeWolfDen,
     Expand
   }
@@ -1087,6 +1088,8 @@ module ZChipAI {
           let unitType = ConstructionCommander.getUnitTypeFromAction(action);
           cost = this._scope.getUnitTypeFieldValue(unitType, ZChipAPI.TypeField.Cost);
           break;
+        case BuildAction.UpgradeCastle:
+        cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.FortressUpgrade, ZChipAPI.TypeField.Cost);
         case BuildAction.UpgradeWolfDen:
           cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.WerewolvesDenUpgrade, ZChipAPI.TypeField.Cost);
           break;
@@ -1116,7 +1119,6 @@ module ZChipAI {
       while(priority.length > 0){
         let workOrder: BuildPriorityItem = priority.shift();
         actionSucceeded = false;
-        debugger;
 
         cost = this.getBuildActionCost(workOrder.buildAction);
         if(cost > disposableGold && workOrder.saveUpFor){
@@ -1200,6 +1202,16 @@ module ZChipAI {
                 }
               }
               break;
+          case BuildAction.UpgradeCastle:
+            for(let i = 0; i < this._cache.castles.length; i++){
+              let castle = <ZChipAPI.ProductionBuilding>this._cache.castles[i];
+
+              if(!castle.isBusy){
+                actionSucceeded = castle.researchUpgrade(ZChipAPI.UpgradeType.WerewolvesDenUpgrade);
+                break;
+              }
+            }
+            break;
           case BuildAction.UpgradeWolfDen:
             for(let i = 0; i < this._cache.wolfDens.length; i++){
               let den = <ZChipAPI.ProductionBuilding>this._cache.wolfDens[i];
@@ -1613,6 +1625,7 @@ module ZChipAI {
     }
 
     executeOrders():void{
+      debugger;
       var primaryBase:ZChipAPI.Building = this.selectPrimaryBase();
 
       // Economic Orders.
