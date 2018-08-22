@@ -11,6 +11,7 @@ module ZChipAI {
     BuildForge,
     BuildHouse,
     BuildMagesGuild,
+    BuildSnakeCharmer,
     BuildWatchtower,
     BuildWolfDen,
     BuildWorkshop,
@@ -227,6 +228,7 @@ module ZChipAI {
       if(this._unitProductionBuildings == null){
         this._unitProductionBuildings = [];
         this._unitProductionBuildings = this._unitProductionBuildings.concat(this.castles);
+        this._unitProductionBuildings = this._unitProductionBuildings.concat(this.fortresses);
         this._unitProductionBuildings = this._unitProductionBuildings.concat(this.barracks);
         this._unitProductionBuildings = this._unitProductionBuildings.concat(this.magesGuilds);
         this._unitProductionBuildings = this._unitProductionBuildings.concat(this.workshops);
@@ -250,6 +252,21 @@ module ZChipAI {
 
       return this._castles;
     };
+
+    // Gets a list of the player's fortesses.
+    private _fortresses: ZChipAPI.ProductionBuilding[];
+    get fortresses(): ZChipAPI.ProductionBuilding[]{
+      if(this._fortresses == null){
+        this._fortresses = <ZChipAPI.ProductionBuilding[]>this._scope.getBuildings({player: this._scope.playerNumber, type: ZChipAPI.BuildingType.Fortress});
+      }
+
+      return this._fortresses;
+    }
+
+    // Gets a list of the player's bases.
+    get bases(): ZChipAPI.ProductionBuilding[]{
+      return this.castles.concat(this.fortresses);
+    }
 
     // Gets a list of the mines on the map.
     private _mines: ZChipAPI.Mine[];
@@ -506,16 +523,16 @@ module ZChipAI {
       return this._maxWorkersPerGoldmine * this.activeMines.length;
     }
 
-    // Gets the mines close enough to our current castles to mine.
+    // Gets the mines close enough to our current bases to mine.
     get activeMines(): ZChipAPI.Mine[]{
       let activeMines: ZChipAPI.Mine[] = [];
-      for(let i = 0; i < this._cache.castles.length; i++){
-        let castle = this._cache.castles[i];
-        let mines = this.getMinesOrderedByProximity(castle, true);
+      for(let i = 0; i < this._cache.bases.length; i++){
+        let base = this._cache.bases[i];
+        let mines = this.getMinesOrderedByProximity(base, true);
 
         for(let j = 0; j < mines.length; j++){
           let mine = mines[j]
-          if(this.getCachedDistanceBetweenBuildings(castle, mine) < this._maxMineDistance){
+          if(this.getCachedDistanceBetweenBuildings(base, mine) < this._maxMineDistance){
             activeMines.push(mine);
 
             if(activeMines.length >= this._maxActiveMines){
@@ -529,16 +546,16 @@ module ZChipAI {
     }
 
     // Gets the distance between two buildings and caches it.
-    private getCachedDistanceBetweenBuildings(castle: ZChipAPI.Building, mine:ZChipAPI.Mine): number{
-      if(this._cachedBuildingDistances[castle.id] === undefined){
-        this._cachedBuildingDistances[castle.id] = [];
+    private getCachedDistanceBetweenBuildings(building1: ZChipAPI.Building, building2:ZChipAPI.Mine): number{
+      if(this._cachedBuildingDistances[building1.id] === undefined){
+        this._cachedBuildingDistances[building1.id] = [];
       }
 
-      if(this._cachedBuildingDistances[castle.id][mine.id] === undefined){
-        this._cachedBuildingDistances[castle.id][mine.id] = this._scope.getDistanceBetweenBuildings(castle, mine);
+      if(this._cachedBuildingDistances[building1.id][building2.id] === undefined){
+        this._cachedBuildingDistances[building1.id][building2.id] = this._scope.getDistanceBetweenBuildings(building1, building2);
       }
 
-      return this._cachedBuildingDistances[castle.id][mine.id];
+      return this._cachedBuildingDistances[building1.id][building2.id];
     }
 
     // Gets the mines ordered by proximity to the specified building.
@@ -672,7 +689,7 @@ module ZChipAI {
       else{
         for (let i = 0; i < idleWorkers.length; i++){
           var worker = idleWorkers[i];
-          var closestBase:ZChipAPI.ProductionBuilding = <ZChipAPI.ProductionBuilding>this._scope.getClosestByGround(worker.x, worker.y, this._cache.castles);
+          var closestBase:ZChipAPI.ProductionBuilding = <ZChipAPI.ProductionBuilding>this._scope.getClosestByGround(worker.x, worker.y, this._cache.bases);
           if(closestBase != null){
             var orderedMines =this.getMinesOrderedByProximity(closestBase, true);
             var closestMine = orderedMines[0];
@@ -718,6 +735,8 @@ module ZChipAI {
           return ZChipAPI.BuildingType.DragonsLair;
         case BuildAction.BuildMagesGuild:
           return ZChipAPI.BuildingType.MagesGuild;
+        case BuildAction.BuildSnakeCharmer:
+          return ZChipAPI.BuildingType.SnakeCharmer;
         case BuildAction.BuildForge:
           return ZChipAPI.BuildingType.Forge;
         case BuildAction.BuildHouse:
@@ -1059,6 +1078,7 @@ module ZChipAI {
         case BuildAction.BuildDragonsLair:
         case BuildAction.BuildForge:
         case BuildAction.BuildMagesGuild:
+        case BuildAction.BuildSnakeCharmer:
         case BuildAction.BuildHouse:
         case BuildAction.BuildWorkshop:
           let buildingType = ConstructionCommander.getBuildingTypeFromAction(action);
@@ -1089,7 +1109,7 @@ module ZChipAI {
           cost = this._scope.getUnitTypeFieldValue(unitType, ZChipAPI.TypeField.Cost);
           break;
         case BuildAction.UpgradeCastle:
-        cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.FortressUpgrade, ZChipAPI.TypeField.Cost);
+          cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.FortressUpgrade, ZChipAPI.TypeField.Cost);
         case BuildAction.UpgradeWolfDen:
           cost = this._scope.getUpgradeTypeFieldValue(ZChipAPI.UpgradeType.WerewolvesDenUpgrade, ZChipAPI.TypeField.Cost);
           break;
@@ -1158,6 +1178,7 @@ module ZChipAI {
           case BuildAction.BuildDragonsLair:
           case BuildAction.BuildForge:
           case BuildAction.BuildMagesGuild:
+          case BuildAction.BuildSnakeCharmer:
           case BuildAction.BuildHouse:
           case BuildAction.BuildWatchtower:
           case BuildAction.BuildWorkshop:
@@ -1187,17 +1208,19 @@ module ZChipAI {
             case BuildAction.TrainWolves:
             case BuildAction.TrainWorker:
               let unitType = ConstructionCommander.getUnitTypeFromAction(workOrder.buildAction);
-              let producerType = this._scope.getProducer(unitType);
+              let producerTypes = this._scope.getProducers(unitType);
 
               let productionBuildings = this._cache.unitProductionBuildings;
               for(let i = 0; i < productionBuildings.length; i++){
                 let productionBuilding = productionBuildings[i];
 
-                if(productionBuilding.type == producerType && !productionBuilding.isBusy){
-                  actionSucceeded = productionBuilding.trainUnit(unitType);
-
-                  if(actionSucceeded){
-                    break;
+                for(let j = 0; j < producerTypes.length; j++){
+                  if(productionBuilding.type == producerTypes[j] && !productionBuilding.isBusy){
+                    actionSucceeded = productionBuilding.trainUnit(unitType);
+  
+                    if(actionSucceeded){
+                      break;
+                    }
                   }
                 }
               }
@@ -1207,7 +1230,7 @@ module ZChipAI {
               let castle = <ZChipAPI.ProductionBuilding>this._cache.castles[i];
 
               if(!castle.isBusy){
-                actionSucceeded = castle.researchUpgrade(ZChipAPI.UpgradeType.WerewolvesDenUpgrade);
+                actionSucceeded = castle.researchUpgrade(ZChipAPI.UpgradeType.FortressUpgrade);
                 break;
               }
             }
@@ -1643,12 +1666,12 @@ module ZChipAI {
 
     // Selects the current primary base.
     selectPrimaryBase(): ZChipAPI.Building{
-      if(this._cache.castles.length > 0){
-        let prioritizedCastles = this._cache.castles.sort((a, b) =>{
+      if(this._cache.bases.length > 0){
+        let prioritizedBases = this._cache.bases.sort((a, b) =>{
           return b.creationCycle - a.creationCycle;
         });
 
-        return prioritizedCastles[0];
+        return prioritizedBases[0];
       }
       else{
         return null;

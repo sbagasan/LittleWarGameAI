@@ -7,7 +7,6 @@ class TowerBuild implements ZChipAI.IBuild{
     scoutArmySize: number;
     retreatArmySize: number;
     attackArmySize:number;
-    upgradeRatio:number;
     attackedDamageThreshold: number;
     maxMineDistance: number;
     maxWorkersPerGoldmine:number;
@@ -27,7 +26,6 @@ class TowerBuild implements ZChipAI.IBuild{
       this.scoutArmySize = 2;
       this.retreatArmySize = 2;
       this.attackArmySize = 5;
-      this.upgradeRatio = 3;
       this.attackedDamageThreshold = 15;
       this.maxMineDistance =15;
       this.maxWorkersPerGoldmine = 10;

@@ -49,7 +49,7 @@ class TestBuild implements ZChipAI.IBuild{
     var priorityQueue: ZChipAI.BuildPriorityItem[] = [];
     var workersAvailable: boolean = disposableWorkers > 0;
 
-    if(this._scope.getUnits({type: ZChipAPI.BuildingType.Fortress}).length < 1){
+    if(this._scope.getBuildings({type: ZChipAPI.BuildingType.Fortress}).length < 1){
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.UpgradeCastle,true));
     }
 
@@ -89,6 +89,10 @@ class TestBuild implements ZChipAI.IBuild{
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildWolfDen,false));
     }
 
+    if(this._scope.getBuildings({type: ZChipAPI.BuildingType.SnakeCharmer}).length < 1){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildSnakeCharmer,false));
+    }
+
     if(this._cache.forges.length < 1){
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildForge,false));
     }
@@ -103,6 +107,10 @@ class TestBuild implements ZChipAI.IBuild{
 
     if(this._cache.werewolfDens.length < 1){
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.UpgradeWolfDen,false));
+    }
+
+    if(this._scope.getBuildings({type: ZChipAPI.BuildingType.DragonsLair}).length < 1){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.BuildDragonsLair,false));
     }
 
     if(this._cache.mages.length < 1){
@@ -144,6 +152,18 @@ class TestBuild implements ZChipAI.IBuild{
     if(this._scope.getUnits({type: ZChipAPI.UnitType.Raider}).length < 1){
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainRaider,false));
     }
+
+    if(this._scope.getUnits({type: ZChipAPI.UnitType.Knight}).length < 1){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainKnight,false));
+    }
+
+    if(this._scope.getUnits({type: ZChipAPI.UnitType.Snake}).length < 1){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainSnake,false));
+    }    
+
+    if(this._scope.getUnits({type: ZChipAPI.UnitType.Dragon}).length < 1){
+      priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainDragon,false));
+    }    
 
     if(this._cache.ballistae.length < 1){
       priorityQueue.push(new ZChipAI.BuildPriorityItem(ZChipAI.BuildAction.TrainBallista,false));

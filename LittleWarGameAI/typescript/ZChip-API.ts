@@ -16,6 +16,7 @@ module ZChipAPI{
         case BuildingType.Forge:
         case BuildingType.Fortress:
         case BuildingType.MagesGuild:
+        case BuildingType.SnakeCharmer:
         case BuildingType.WerewolvesDen:
         case BuildingType.WolvesDen:
         case BuildingType.Workshop:
@@ -116,6 +117,12 @@ module ZChipAPI{
           return "upgattack";
         case "Research Fireball":
           return "upgfireball";
+        case "Snake Charmer":
+          return "researchsnakebuilding";
+        case "Gatling Gun":
+          return "gatt";
+        case "Knight Warrior":
+          return "knightunit_";
         default:
           return typeName.toLowerCase().split(" ").join("");
       }
@@ -146,6 +153,8 @@ module ZChipAPI{
           return BuildingType.MagesGuild;
         case "Goldmine":
           return BuildingType.Mine;
+        case "Snake Charmer":
+          return BuildingType.SnakeCharmer;
         case "Watchtower":
           return BuildingType.Watchtower;
         case "Watchtower (detection)":
@@ -182,6 +191,8 @@ module ZChipAPI{
           return BuildingType.House;
         case OrderType.BuildMagesGuild:
           return BuildingType.MagesGuild;
+        case OrderType.BuildSnakeCharmer:
+          return BuildingType.SnakeCharmer;
         case OrderType.BuildWatchtower:
           return BuildingType.Watchtower;
         case OrderType.BuildWolvesDen:
@@ -214,7 +225,7 @@ module ZChipAPI{
           return UnitType.GatlingGun;
         case "Healing Ward":
           return UnitType.HealingWard;
-        case "Knight":
+        case "Knight Warrior":
           return UnitType.Knight;
         case "Mage":
           return UnitType.Mage;
@@ -309,6 +320,8 @@ module ZChipAPI{
           return "Mages Guild";
         case BuildingType.Mine:
           return "Goldmine";
+        case BuildingType.SnakeCharmer:
+          return "Snake Charmer";
         case BuildingType.Watchtower:
           return "Watchtower";
         case BuildingType.WatchtowerDetection:
@@ -343,6 +356,8 @@ module ZChipAPI{
           return OrderType.BuildHouse;
         case BuildingType.MagesGuild:
           return OrderType.BuildMagesGuild;
+        case BuildingType.SnakeCharmer:
+          return OrderType.BuildSnakeCharmer;
         case BuildingType.Watchtower:
           return OrderType.BuildWatchtower;
         case BuildingType.WolvesDen:
@@ -376,7 +391,7 @@ module ZChipAPI{
         case UnitType.HealingWard:
           return "Healing Ward";
         case UnitType.Knight:
-          return "Knight";
+          return "Knight Warrior";
         case UnitType.Mage:
           return "Mage";
         case UnitType.Priest:
@@ -428,6 +443,8 @@ module ZChipAPI{
           return OrderType.BuildHouse;
         case "Build Mages Guild":
           return OrderType.BuildMagesGuild;
+        case "Build Snake Charmer":
+          return OrderType.BuildSnakeCharmer;
         case "Build Watchtower":
           return OrderType.BuildWatchtower;
         case "Build Wolves Den":
@@ -585,6 +602,8 @@ module ZChipAPI{
           return "Build House";
         case OrderType.BuildMagesGuild:
           return "Build Mages Guild";
+        case OrderType.BuildSnakeCharmer:
+          return "Build Snake Charmer";
         case OrderType.BuildWatchtower:
           return "Build Watchtower";
         case OrderType.BuildWolvesDen:
@@ -696,6 +715,7 @@ module ZChipAPI{
     BuildForge,
     BuildHouse,
     BuildMagesGuild,
+    BuildSnakeCharmer,
     BuildWatchtower,
     BuildWolvesDen,
     BuildWorkshop,
@@ -741,6 +761,7 @@ module ZChipAPI{
     House,
     MagesGuild,
     Mine,
+    SnakeCharmer,
     Watchtower,
     WatchtowerDetection,
     WerewolvesDen,
@@ -779,33 +800,33 @@ module ZChipAPI{
     // The wrapped little war game object.
     private _innerScope: LWG.IScope;
 
-    getProducer(type: UnitType):BuildingType{
+    getProducers(type: UnitType):BuildingType[]{
       switch(type){
         case UnitType.Bird:
         case UnitType.Worker:
-          return BuildingType.Castle;
-          // TODO: or fortress.
+          return [BuildingType.Castle, BuildingType.Fortress];
         case UnitType.Soldier:
         case UnitType.Archer:
         case UnitType.Knight:
         case UnitType.Raider:
-          return BuildingType.Barracks;
+          return [BuildingType.Barracks];
         case UnitType.Wolf:
         case UnitType.Snake:
-          return BuildingType.WolvesDen;
-          //TODO: or werewolves den.
+          return [BuildingType.WolvesDen, BuildingType.WerewolvesDen];
         case UnitType.Mage:
-          return BuildingType.MagesGuild;
+          return [BuildingType.MagesGuild];
         case UnitType.Priest:
-          return BuildingType.Church;
+          return [BuildingType.Church];
         case UnitType.Catapult:
         case UnitType.GatlingGun:
-          return BuildingType.Workshop;
+          return [BuildingType.Workshop];
         case UnitType.Ballista:
         case UnitType.Airship:
-          return BuildingType.AdvancedWorkshop;
+          return [BuildingType.AdvancedWorkshop];
         case UnitType.Werewolf:
-          return BuildingType.WerewolvesDen;
+          return [BuildingType.WerewolvesDen];
+        case UnitType.Dragon:
+          return [BuildingType.DragonsLair];
       }
     }
 
